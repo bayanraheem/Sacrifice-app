@@ -8,34 +8,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --iac-primary: #1b8f4c; --bg-color: #f4f7f6; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg-color); margin: 0; display: flex; height: 100vh; }
-        .sidebar { width: 250px; background: var(--iac-primary); color: white; padding: 20px; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg-color); margin: 0; display: flex; height: 100vh; flex-direction: column; }
+        @media(min-width: 768px) { body { flex-direction: row; } }
+        .sidebar { width: 100%; background: var(--iac-primary); color: white; padding: 20px; }
+        @media(min-width: 768px) { .sidebar { width: 250px; } }
         .main { flex: 1; padding: 20px; overflow-y: auto; }
         .container { max-width: 500px; margin: 0 auto; }
-        #reader { width: 100%; border-radius: 12px; background: #000; margin-bottom: 20px; }
+        #reader { width: 100%; border-radius: 12px; background: #000; overflow: hidden; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; margin-top: 20px; border-right: 5px solid var(--iac-primary); }
         .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; }
         .status { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; }
         .pending { background: #fff3cd; color: #856404; }
         .delivered { background: #d4edda; color: #155724; }
         .btn-deliver { width: 100%; padding: 15px; background: var(--iac-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
-        .input-group { display: flex; gap: 5px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .input-group { display: flex; gap: 5px; margin: 20px 0; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>🐐 حملة الأضاحي</h2>
-    <p>نظام التسليم السريع (JSONP)</p>
+    <p>نظام التسليم الفوري</p>
 </div>
 
 <div class="main">
     <div class="container">
         <div id="reader"></div>
+
         <div class="input-group">
             <input type="text" id="idInput" placeholder="أدخل ID المستفيد...">
-            <button onclick="fetchBeneficiary(document.getElementById('idInput').value)" style="background:var(--iac-primary); color:white; border:none; padding:0 15px; border-radius:8px; cursor:pointer">بحث</button>
+            <button onclick="fetchBeneficiary(document.getElementById('idInput').value)" style="background:var(--iac-primary); color:white; border:none; padding:0 20px; border-radius:8px; cursor:pointer">بحث</button>
         </div>
 
         <div id="infoCard" class="card">
@@ -50,39 +53,63 @@
 </div>
 
 <script>
+    // تأكدي من تحديث الرابط هنا بعد الـ Deploy الجديد
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVwQGjOSwuOWfOyA3WL2MXVV6DA7VaQJx8aVnEiBO7rAGFyNLyLAbZqjmMH0RyscuWgQ/exec";
     let currentId = "";
 
-    // --- JSONP ENGINE ---
-    function jsonp(url, callbackName) {
+    // --- JSONP ENGINE (محسن لمنع مشاكل الكاش والأسماء المكررة) ---
+    function jsonpRequest(url) {
         return new Promise((resolve, reject) => {
+            const callbackName = 'callback_' + Math.round(Math.random() * 1000000);
             const script = document.createElement('script');
-            script.src = `${url}&callback=${callbackName}`;
+            
+            script.src = `${url}${url.includes('?') ? '&' : '?'}callback=${callbackName}`;
+            
             window[callbackName] = (data) => {
-                resolve(data);
-                document.body.removeChild(script);
                 delete window[callbackName];
+                document.body.removeChild(script);
+                resolve(data);
             };
-            script.onerror = reject;
+
+            script.onerror = () => {
+                document.body.removeChild(script);
+                reject(new Error('JSONP Request Failed'));
+            };
+
             document.body.appendChild(script);
         });
     }
 
-    // --- SCANNER ---
-    function onScanSuccess(decodedText) { fetchBeneficiary(decodedText); }
-    let scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-    scanner.render(onScanSuccess);
+    // --- SCANNER CONFIG (حل مشكلة الكاميرا) ---
+    function onScanSuccess(decodedText) { 
+        // تجنب التكرار إذا كان نفس الكود
+        if(currentId === decodedText) return;
+        fetchBeneficiary(decodedText); 
+    }
+
+    // استخدام Html5QrcodeScanner بدلاً من Html5Qrcode لتجنب مشاكل الإعدادات اليدوية
+    let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: 250,
+        aspectRatio: 1.0 
+    });
+    html5QrcodeScanner.render(onScanSuccess);
 
     // --- ACTIONS ---
     async function fetchBeneficiary(id) {
         if(!id) return;
         currentId = id.trim();
         try {
-            // استخدام تكتيك JSONP للالتفاف على CORS
-            const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`, "handleBeneficiary");
-            if(res.status === "success") showData(res.data);
-            else alert("⚠️ المستفيد غير موجود");
-        } catch (e) { alert("خطأ في الاتصال"); }
+            const res = await jsonpRequest(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
+            if(res.status === "success") {
+                showData(res.data);
+            } else {
+                alert("⚠️ المستفيد غير موجود في قاعدة البيانات");
+            }
+        } catch (e) { 
+            console.error(e);
+            alert("خطأ في الاتصال بالسيرفر. تأكد من نشر السكريبت كـ Anyone."); 
+        }
     }
 
     function showData(data) {
@@ -100,20 +127,20 @@
             btn.style.display = "none";
         } else {
             box.className = "status pending";
-            box.innerText = "⏳ جاهز للتسليم";
+            box.innerText = "⏳ لم يتم الاستلام بعد";
             btn.style.display = "block";
         }
     }
 
     async function processDelivery() {
-        if(!confirm("تأكيد التسليم؟")) return;
+        if(!confirm("تأكيد تسجيل التسليم لهذا المستفيد؟")) return;
         try {
-            const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`, "handleDelivery");
+            const res = await jsonpRequest(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
             if(res.status === "success") {
                 alert("🎉 تم التسليم بنجاح");
                 fetchBeneficiary(currentId);
             }
-        } catch (e) { alert("خطأ في التحديث"); }
+        } catch (e) { alert("حدث خطأ أثناء التحديث"); }
     }
 </script>
 </body>
