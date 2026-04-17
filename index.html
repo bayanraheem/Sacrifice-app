@@ -4,36 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>IAC System</title>
+<title>IAC - Sacrifice</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 :root {
   --primary: #0a5c2f;
-  --light: #f3f7f4;
+  --dark: #084524;
+  --bg: #f4f7f5;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI';
-  background: var(--light);
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg);
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: var(--primary);
+  color: white;
+  height: 100vh;
+  padding-top: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  text-align: center;
+  font-size: 18px;
+}
+
+.menu {
+  margin-top: 20px;
+}
+
+.menu button {
+  width: 100%;
+  background: none;
+  border: none;
+  color: white;
+  padding: 15px;
+  text-align: right;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.menu button:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* MAIN */
+.main {
+  margin-left: 220px;
+  width: 100%;
 }
 
 /* HEADER */
 .header {
   background: var(--primary);
   color: white;
-  padding: 15px;
-  text-align: center;
-  font-size: 20px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header img {
+  width: 40px;
+}
+
+.header span {
+  font-size: 18px;
   font-weight: bold;
 }
 
-/* CONTAINER */
+/* CONTENT */
 .container {
   padding: 15px;
-  max-width: 420px;
+  max-width: 450px;
   margin: auto;
 }
 
@@ -42,13 +93,12 @@ body {
   background: white;
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 10px;
   text-align: center;
+  margin-bottom: 10px;
   font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* INPUT GROUP */
+/* INPUT */
 .input-group {
   display: flex;
   gap: 10px;
@@ -59,22 +109,16 @@ input {
   padding: 12px;
   border-radius: 10px;
   border: 1px solid #ccc;
-  font-size: 16px;
 }
 
 /* BUTTON */
 button {
   padding: 12px;
-  border: none;
   border-radius: 10px;
+  border: none;
   cursor: pointer;
   background: var(--primary);
   color: white;
-}
-
-/* SCANNER */
-#reader {
-  margin-top: 10px;
 }
 
 /* CARD */
@@ -83,7 +127,7 @@ button {
   padding: 15px;
   border-radius: 15px;
   margin-top: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .id-card {
@@ -107,30 +151,45 @@ button {
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="header">IAC Distribution</div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>القائمة</h2>
+  <div class="menu">
+    <button>📦 توزيع الأضاحي</button>
+    <button>📊 التقارير (قريبًا)</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="header">
+  <img src="https://i.postimg.cc/BvLv7FDL/images.jpg">
+  <span>مؤسسة الإغاثة - حملة الأضاحي</span>
+</div>
 
 <div class="container">
 
 <div id="status" class="status">جاهز</div>
 
-<!-- INPUT -->
 <div class="input-group">
-  <input type="text" id="idInput" placeholder="ادخل ID او امسح QR">
+  <input id="idInput" placeholder="ادخل ID أو امسح QR">
   <button onclick="search()">بحث</button>
 </div>
 
-<!-- SCANNER -->
-<button style="width:100%; margin-top:10px;" onclick="startScanner()">📷 مسح QR</button>
+<button style="width:100%;margin-top:10px;" onclick="startScanner()">📷 مسح QR</button>
 
 <div id="reader"></div>
 
-<!-- RESULT -->
 <div id="result"></div>
+
+</div>
 
 </div>
 
@@ -138,42 +197,41 @@ button {
 
 const API_URL = "https://script.google.com/macros/s/AKfycbz60lRvHE4P3RGj7v82xtqA5v056vF2svRgNJEKh50ypJLA9DebMHdmq7K2_y7r8xFtHw/exec";
 
-function setStatus(msg) {
+function setStatus(msg){
   document.getElementById("status").innerText = msg;
 }
 
-function loader() {
+function loader(){
   document.getElementById("result").innerHTML = "<div class='loader'></div>";
 }
 
-/* ===================== SEARCH ===================== */
-function search() {
+/* SEARCH (JSONP) */
+function search(){
   const id = document.getElementById("idInput").value.trim();
-  if (!id) return;
+  if(!id) return;
 
   setStatus("🔍 جارِ البحث...");
   loader();
 
   const script = document.createElement("script");
-  const callbackName = "handleResponse";
 
-  window[callbackName] = function(data) {
-    if (data.error) {
+  window.handleResponse = function(data){
+    if(data.error){
       setStatus("❌ غير موجود");
-      document.getElementById("result").innerHTML = "";
-    } else {
+      document.getElementById("result").innerHTML="";
+    }else{
       setStatus("✅ تم العثور");
       render(data);
     }
     document.body.removeChild(script);
   };
 
-  script.src = `${API_URL}?id=${id}&callback=${callbackName}`;
+  script.src = `${API_URL}?id=${id}&callback=handleResponse`;
   document.body.appendChild(script);
 }
 
-/* ===================== RENDER ===================== */
-function render(d) {
+/* RENDER */
+function render(d){
   let html = `
     <div class="card id-card">
       <h3>${d.name}</h3>
@@ -183,17 +241,13 @@ function render(d) {
     </div>
   `;
 
-  if (d.delivered) {
-    html += `
-      <div class="card">
-        <p class="ok">✔ تم الاستلام</p>
-      </div>
-    `;
-  } else {
+  if(d.delivered){
+    html += `<div class="card"><p class="ok">✔ تم الاستلام</p></div>`;
+  }else{
     html += `
       <div class="card">
         <p class="no">❌ لم يتم الاستلام</p>
-        <button onclick="deliver(${d.id})">تسليم</button>
+        <button onclick="deliver('${d.id}')">تسليم</button>
       </div>
     `;
   }
@@ -201,29 +255,28 @@ function render(d) {
   document.getElementById("result").innerHTML = html;
 }
 
-/* ===================== DELIVER ===================== */
-function deliver(id) {
+/* DELIVER */
+function deliver(id){
   setStatus("⏳ جاري التسليم...");
   loader();
 
   const script = document.createElement("script");
-  const callbackName = "handleDeliver";
 
-  window[callbackName] = function() {
+  window.handleDeliver = function(){
     setStatus("✅ تم التسليم");
     document.getElementById("idInput").value = id;
     search();
     document.body.removeChild(script);
   };
 
-  script.src = `${API_URL}?id=${id}&action=deliver&callback=${callbackName}`;
+  script.src = `${API_URL}?id=${id}&action=deliver&callback=handleDeliver`;
   document.body.appendChild(script);
 }
 
-/* ===================== SCANNER ===================== */
+/* SCANNER */
 let scanner;
 
-function startScanner() {
+function startScanner(){
   setStatus("📷 تشغيل الكاميرا...");
 
   scanner = new Html5Qrcode("reader");
@@ -231,15 +284,10 @@ function startScanner() {
   scanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    (decodedText) => {
+    (text)=>{
       setStatus("📷 تم المسح");
-
-      // 🔥 تعبئة الحقل تلقائيًا
-      document.getElementById("idInput").value = decodedText;
-
+      document.getElementById("idInput").value = text;
       scanner.stop();
-
-      // 🔥 بحث تلقائي
       search();
     }
   );
