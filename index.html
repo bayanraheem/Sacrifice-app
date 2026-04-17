@@ -2,138 +2,293 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IAC | حملة الأضاحي</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --iac-primary: #1b8f4c; --bg-color: #f4f7f6; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg-color); margin: 0; display: flex; height: 100vh; flex-direction: column; }
-        @media(min-width: 768px) { body { flex-direction: row; } }
-        .sidebar { width: 100%; background: var(--iac-primary); color: white; padding: 20px; }
-        @media(min-width: 768px) { .sidebar { width: 250px; } }
-        .main { flex: 1; padding: 20px; overflow-y: auto; }
-        .container { max-width: 500px; margin: 0 auto; }
-        #reader { width: 100%; border-radius: 12px; background: #000; overflow: hidden; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; margin-top: 20px; border-right: 5px solid var(--iac-primary); }
-        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; }
-        .status { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; }
-        .pending { background: #fff3cd; color: #856404; }
-        .delivered { background: #d4edda; color: #155724; }
-        .btn-deliver { width: 100%; padding: 15px; background: var(--iac-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
-        .input-group { display: flex; gap: 5px; margin: 20px 0; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        :root {
+            --iac-primary: #1b8f4c;
+            --iac-dark: #0e5a2f;
+            --iac-accent: #f1c40f;
+            --bg-color: #f8faf9;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-color);
+            margin: 0; padding: 0;
+            color: #2c3e50;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* Header / Sidebar Mobile */
+        header {
+            background: var(--iac-primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        header h2 { margin: 0; font-size: 1.3rem; font-weight: 800; }
+        header p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.9; }
+
+        .main-container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Search & Scan Section */
+        .search-box {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #edf2f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--iac-primary); }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-search { background: var(--iac-primary); color: white; padding: 0 20px; }
+        .btn-scan {
+            width: 100%;
+            padding: 14px;
+            background: #eaf6ee;
+            color: var(--iac-primary);
+            border: 2px dashed var(--iac-primary);
+        }
+
+        /* Beneficiary Card */
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .card-header { background: #f1f8f4; padding: 15px 20px; border-bottom: 1px solid #e2eee7; }
+        .card-header h3 { margin: 0; color: var(--iac-dark); font-size: 1.1rem; }
+
+        .card-body { padding: 20px; }
+        .info-item { margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px; }
+        .info-item label { font-size: 0.8rem; color: #7f8c8d; }
+        .info-item span { font-size: 1.1rem; font-weight: 700; color: #2c3e50; }
+
+        .status-pill {
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 800;
+            margin-top: 10px;
+        }
+        .pending { background: #fff9e6; color: #d4a017; border: 1px solid #f9ebbe; }
+        .delivered { background: #e7f7ed; color: #1b8f4c; border: 1px solid #c8e9d5; }
+
+        .btn-confirm {
+            width: 100%;
+            padding: 16px;
+            background: var(--iac-primary);
+            color: white;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(27, 143, 76, 0.3);
+        }
+
+        /* Camera Overlay (The Modal) */
+        #cameraOverlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .close-camera {
+            position: absolute;
+            top: 30px; right: 30px;
+            background: white;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>🐐 حملة الأضاحي</h2>
-    <p>نظام التسليم الفوري</p>
-</div>
+<header>
+    <h2>مؤسسة IAC للإغاثة</h2>
+    <p>🐐 نظام توزيع الأضاحي 2026</p>
+</header>
 
-<div class="main">
-    <div class="container">
-        <div id="reader"></div>
-
+<div class="main-container">
+    <div class="search-box">
         <div class="input-group">
-            <input type="text" id="idInput" placeholder="أدخل ID المستفيد...">
-            <button onclick="fetchBeneficiary(document.getElementById('idInput').value)" style="background:var(--iac-primary); color:white; border:none; padding:0 20px; border-radius:8px; cursor:pointer">بحث</button>
+            <input type="text" id="idInput" placeholder="أدخل رقم الـ ID هنا...">
+            <button class="btn btn-search" onclick="fetchBeneficiary(document.getElementById('idInput').value)">بحث</button>
         </div>
+        <button class="btn btn-scan" onclick="openScanner()">
+            📷 فتح ماسح الباركود
+        </button>
+    </div>
 
-        <div id="infoCard" class="card">
-            <h3 style="margin:0 0 15px; color:var(--iac-primary)">بيانات المستفيد</h3>
-            <div class="info-row"><span>الاسم:</span> <b id="resName"></b></div>
-            <div class="info-row"><span>القرين:</span> <b id="resSpouse"></b></div>
-            <div class="info-row"><span>ID:</span> <b id="resId"></b></div>
-            <div id="statusBox" class="status"></div>
-            <button id="deliverBtn" class="btn-deliver" onclick="processDelivery()">تأكيد عملية التسليم</button>
+    <div id="resultCard" class="result-card">
+        <div class="card-header"><h3>بيانات المستفيد</h3></div>
+        <div class="card-body">
+            <div class="info-item"><label>الاسم الكامل</label><span id="resName">-</span></div>
+            <div class="info-item"><label>اسم القرين</label><span id="resSpouse">-</span></div>
+            <div class="info-item"><label>رقم الـ ID</label><span id="resId">-</span></div>
+            
+            <div id="statusPill" class="status-pill"></div>
+            <button id="deliverBtn" class="btn btn-confirm" onclick="processDelivery()">تأكيد التسليم الآن</button>
         </div>
     </div>
 </div>
 
+<div id="cameraOverlay">
+    <div class="close-camera" onclick="closeScanner()">✕</div>
+    <div id="reader"></div>
+    <p style="color:white; text-align:center; margin-top:20px;">وجه الكاميرا نحو الباركود</p>
+</div>
+
 <script>
-    // تأكدي من تحديث الرابط هنا بعد الـ Deploy الجديد
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVwQGjOSwuOWfOyA3WL2MXVV6DA7VaQJx8aVnEiBO7rAGFyNLyLAbZqjmMH0RyscuWgQ/exec";
     let currentId = "";
+    let html5QrCode;
 
-    // --- JSONP ENGINE (محسن لمنع مشاكل الكاش والأسماء المكررة) ---
+    // محرك JSONP
     function jsonpRequest(url) {
         return new Promise((resolve, reject) => {
-            const callbackName = 'callback_' + Math.round(Math.random() * 1000000);
+            const callbackName = 'cb_' + Math.round(Math.random() * 1000000);
             const script = document.createElement('script');
-            
             script.src = `${url}${url.includes('?') ? '&' : '?'}callback=${callbackName}`;
-            
             window[callbackName] = (data) => {
                 delete window[callbackName];
                 document.body.removeChild(script);
                 resolve(data);
             };
-
-            script.onerror = () => {
-                document.body.removeChild(script);
-                reject(new Error('JSONP Request Failed'));
-            };
-
+            script.onerror = () => reject(new Error('خطأ في الاتصال'));
             document.body.appendChild(script);
         });
     }
 
-    // --- SCANNER CONFIG (حل مشكلة الكاميرا) ---
-    function onScanSuccess(decodedText) { 
-        // تجنب التكرار إذا كان نفس الكود
-        if(currentId === decodedText) return;
-        fetchBeneficiary(decodedText); 
-    }
-
-    // استخدام Html5QrcodeScanner بدلاً من Html5Qrcode لتجنب مشاكل الإعدادات اليدوية
-    let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: 250,
-        aspectRatio: 1.0 
-    });
-    html5QrcodeScanner.render(onScanSuccess);
-
-    // --- ACTIONS ---
-    async function fetchBeneficiary(id) {
-        if(!id) return;
-        currentId = id.trim();
+    // وظائف الكاميرا
+    async function openScanner() {
+        document.getElementById('cameraOverlay').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+        
         try {
-            const res = await jsonpRequest(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
-            if(res.status === "success") {
-                showData(res.data);
-            } else {
-                alert("⚠️ المستفيد غير موجود في قاعدة البيانات");
-            }
-        } catch (e) { 
-            console.error(e);
-            alert("خطأ في الاتصال بالسيرفر. تأكد من نشر السكريبت كـ Anyone."); 
+            await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                document.getElementById('idInput').value = decodedText;
+                closeScanner();
+                fetchBeneficiary(decodedText); // البحث تلقائياً بعد المسح
+            });
+        } catch (err) {
+            alert("تعذر فتح الكاميرا: " + err);
+            closeScanner();
         }
     }
 
-    function showData(data) {
-        document.getElementById('infoCard').style.display = 'block';
+    function closeScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('cameraOverlay').style.display = 'none';
+            });
+        } else {
+            document.getElementById('cameraOverlay').style.display = 'none';
+        }
+    }
+
+    // جلب البيانات
+    async function fetchBeneficiary(id) {
+        if(!id) return;
+        currentId = id.trim();
+        document.getElementById('resultCard').style.display = 'none';
+
+        try {
+            const res = await jsonpRequest(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
+            if(res.status === "success") {
+                renderData(res.data);
+            } else {
+                alert("⚠️ الـ ID غير موجود");
+            }
+        } catch (e) { alert("فشل جلب البيانات"); }
+    }
+
+    function renderData(data) {
+        document.getElementById('resultCard').style.display = 'block';
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resSpouse').innerText = data.spouse;
         document.getElementById('resId').innerText = data.id;
 
-        const box = document.getElementById('statusBox');
+        const pill = document.getElementById('statusPill');
         const btn = document.getElementById('deliverBtn');
-        
+
         if(data.isDelivered) {
-            box.className = "status delivered";
-            box.innerText = "✅ تم الاستلام مسبقاً";
+            pill.className = "status-pill delivered";
+            pill.innerText = "✅ تم الاستلام مسبقاً";
             btn.style.display = "none";
         } else {
-            box.className = "status pending";
-            box.innerText = "⏳ لم يتم الاستلام بعد";
+            pill.className = "status-pill pending";
+            pill.innerText = "⏳ جاهز للاستلام";
             btn.style.display = "block";
         }
     }
 
     async function processDelivery() {
-        if(!confirm("تأكيد تسجيل التسليم لهذا المستفيد؟")) return;
+        if(!confirm("هل أنت متأكد من تسليم الأضحية لهذا المستفيد؟")) return;
         try {
             const res = await jsonpRequest(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
             if(res.status === "success") {
