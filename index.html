@@ -11,13 +11,13 @@
 <style>
 :root {
   --primary: #0a5c2f;
-  --secondary: #e8f5ee;
+  --light: #f3f7f4;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #eef7f1, #ffffff);
+  font-family: 'Segoe UI';
+  background: var(--light);
 }
 
 /* HEADER */
@@ -33,47 +33,47 @@ body {
 /* CONTAINER */
 .container {
   padding: 15px;
-  max-width: 400px;
+  max-width: 420px;
   margin: auto;
 }
 
-/* STATUS BAR */
+/* STATUS */
 .status {
-  background: #fff;
+  background: white;
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* BUTTONS */
-.btn {
-  width: 100%;
+/* INPUT GROUP */
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
   padding: 12px;
-  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+/* BUTTON */
+button {
+  padding: 12px;
   border: none;
   border-radius: 10px;
-  font-size: 16px;
   cursor: pointer;
-}
-
-.primary {
   background: var(--primary);
   color: white;
 }
 
-.secondary {
-  background: #ddd;
-}
-
-/* INPUT */
-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+/* SCANNER */
+#reader {
   margin-top: 10px;
 }
 
@@ -83,23 +83,15 @@ input {
   padding: 15px;
   border-radius: 15px;
   margin-top: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  animation: fadeIn 0.4s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .id-card {
   border-left: 5px solid var(--primary);
 }
 
-.status-ok {
-  color: green;
-  font-weight: bold;
-}
-
-.status-no {
-  color: red;
-  font-weight: bold;
-}
+.ok { color: green; font-weight: bold; }
+.no { color: red; font-weight: bold; }
 
 /* LOADER */
 .loader {
@@ -115,11 +107,6 @@ input {
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; }
-}
 </style>
 </head>
 
@@ -129,15 +116,18 @@ input {
 
 <div class="container">
 
-<div id="status" class="status">جاهز للعمل</div>
+<div id="status" class="status">جاهز</div>
 
 <!-- INPUT -->
-<input type="text" id="manualId" placeholder="أدخل ID يدويًا">
-<button class="btn secondary" onclick="searchManual()">بحث</button>
+<div class="input-group">
+  <input type="text" id="idInput" placeholder="ادخل ID او امسح QR">
+  <button onclick="search()">بحث</button>
+</div>
 
-<!-- QR -->
-<div id="reader" style="margin-top:15px;"></div>
-<button class="btn primary" onclick="startScanner()">تشغيل الكاميرا</button>
+<!-- SCANNER -->
+<button style="width:100%; margin-top:10px;" onclick="startScanner()">📷 مسح QR</button>
+
+<div id="reader"></div>
 
 <!-- RESULT -->
 <div id="result"></div>
@@ -146,69 +136,59 @@ input {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyLdNxmekWrqytJMsqDzmZ3x8N7Ckt-LNdRnYBJlDtbYaUCZsDYmkQBI-fjDrm55MvyFg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyZVNY5eJtjiJNi8yYL-VqtMwgTLaQKsGPq7ZVgQzXuwHZJxH9n1ymLLq8c9q4HNwYx6g/exec";
 
 function setStatus(msg) {
   document.getElementById("status").innerText = msg;
 }
 
-function showLoader() {
+function loader() {
   document.getElementById("result").innerHTML = "<div class='loader'></div>";
 }
 
-/* =========================
-   SEARCH
-========================= */
-function searchManual() {
-  const id = document.getElementById("manualId").value;
+/* ===================== SEARCH ===================== */
+function search() {
+  const id = document.getElementById("idInput").value.trim();
   if (!id) return;
-  fetchData(id);
-}
 
-/* =========================
-   FETCH DATA
-========================= */
-function fetchData(id) {
   setStatus("🔍 جارِ البحث...");
-  showLoader();
+  loader();
 
   fetch(API_URL + "?id=" + id)
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
       if (data.error) {
         setStatus("❌ غير موجود");
         document.getElementById("result").innerHTML = "";
       } else {
         setStatus("✅ تم العثور");
-        renderData(data);
+        render(data);
       }
     });
 }
 
-/* =========================
-   RENDER
-========================= */
-function renderData(data) {
+/* ===================== RENDER ===================== */
+function render(d) {
   let html = `
     <div class="card id-card">
-      <h3>${data.name}</h3>
-      <p>ID: ${data.id}</p>
-      <p>القرين: ${data.partner}</p>
-      <p>📞 ${data.phone}</p>
+      <h3>${d.name}</h3>
+      <p>ID: ${d.id}</p>
+      <p>القرين: ${d.partner}</p>
+      <p>📞 ${d.phone}</p>
     </div>
   `;
 
-  if (data.delivered) {
+  if (d.delivered) {
     html += `
       <div class="card">
-        <p class="status-ok">✔ تم الاستلام</p>
+        <p class="ok">✔ تم الاستلام</p>
       </div>
     `;
   } else {
     html += `
       <div class="card">
-        <p class="status-no">❌ لم يتم الاستلام</p>
-        <button class="btn primary" onclick="deliver(${data.id})">تسليم</button>
+        <p class="no">❌ لم يتم الاستلام</p>
+        <button onclick="deliver(${d.id})">تسليم</button>
       </div>
     `;
   }
@@ -216,24 +196,21 @@ function renderData(data) {
   document.getElementById("result").innerHTML = html;
 }
 
-/* =========================
-   DELIVER
-========================= */
+/* ===================== DELIVER ===================== */
 function deliver(id) {
-  setStatus("⏳ جارِ تسجيل التسليم...");
-  showLoader();
+  setStatus("⏳ جاري التسليم...");
+  loader();
 
   fetch(API_URL + "?id=" + id + "&action=deliver")
-    .then(res => res.json())
+    .then(r => r.json())
     .then(() => {
-      setStatus("✅ تم التسليم بنجاح");
-      fetchData(id);
+      setStatus("✅ تم التسليم");
+      document.getElementById("idInput").value = id;
+      search();
     });
 }
 
-/* =========================
-   QR SCANNER
-========================= */
+/* ===================== SCANNER ===================== */
 let scanner;
 
 function startScanner() {
@@ -246,8 +223,14 @@ function startScanner() {
     { fps: 10, qrbox: 250 },
     (decodedText) => {
       setStatus("📷 تم المسح");
+
+      // 🔥 تعبئة الحقل تلقائيًا
+      document.getElementById("idInput").value = decodedText;
+
       scanner.stop();
-      fetchData(decodedText);
+
+      // 🔥 بحث تلقائي
+      search();
     }
   );
 }
