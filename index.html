@@ -136,7 +136,7 @@ button {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzpn6EUzRlrTbnSdg8MO9CQd_B3oOPgYeTeEhV3_FQej-3Pj6nx1z6ay1jfjfNYN6CroA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz60lRvHE4P3RGj7v82xtqA5v056vF2svRgNJEKh50ypJLA9DebMHdmq7K2_y7r8xFtHw/exec";
 
 function setStatus(msg) {
   document.getElementById("status").innerText = msg;
@@ -154,15 +154,10 @@ function search() {
   setStatus("🔍 جارِ البحث...");
   loader();
 
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ id: id }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(res => res.json())
-  .then(data => {
+  const script = document.createElement("script");
+  const callbackName = "handleResponse";
+
+  window[callbackName] = function(data) {
     if (data.error) {
       setStatus("❌ غير موجود");
       document.getElementById("result").innerHTML = "";
@@ -170,8 +165,11 @@ function search() {
       setStatus("✅ تم العثور");
       render(data);
     }
-  })
-  .catch(() => setStatus("❌ خطأ في الاتصال"));
+    document.body.removeChild(script);
+  };
+
+  script.src = `${API_URL}?id=${id}&callback=${callbackName}`;
+  document.body.appendChild(script);
 }
 
 /* ===================== RENDER ===================== */
@@ -208,22 +206,18 @@ function deliver(id) {
   setStatus("⏳ جاري التسليم...");
   loader();
 
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      id: id,
-      action: "deliver"
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(res => res.json())
-  .then(() => {
+  const script = document.createElement("script");
+  const callbackName = "handleDeliver";
+
+  window[callbackName] = function() {
     setStatus("✅ تم التسليم");
     document.getElementById("idInput").value = id;
     search();
-  });
+    document.body.removeChild(script);
+  };
+
+  script.src = `${API_URL}?id=${id}&action=deliver&callback=${callbackName}`;
+  document.body.appendChild(script);
 }
 
 /* ===================== SCANNER ===================== */
