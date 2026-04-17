@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>IAC Distribution</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f5f7f6;
+  text-align: center;
+}
+
+h1 {
+  color: #0a5c2f;
+}
+
+#reader {
+  width: 300px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin: 15px auto;
+  width: 300px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.id-card {
+  border-left: 6px solid #0a5c2f;
+}
+
+.status-ok {
+  color: green;
+  font-weight: bold;
+}
+
+.status-no {
+  color: red;
+  font-weight: bold;
+}
+
+button {
+  background: #0a5c2f;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #084524;
+}
+</style>
+</head>
+
+<body>
+
+<h1>IAC Distribution System</h1>
+
+<div id="reader"></div>
+
+<div id="result"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyLdNxmekWrqytJMsqDzmZ3x8N7Ckt-LNdRnYBJlDtbYaUCZsDYmkQBI-fjDrm55MvyFg/exec"; // 🔥 ضع رابط Apps Script هنا
+
+function onScanSuccess(decodedText) {
+  fetchData(decodedText);
+}
+
+function fetchData(id) {
+  fetch(API_URL + "?id=" + id)
+    .then(res => res.json())
+    .then(data => renderData(data));
+}
+
+function renderData(data) {
+  if (data.error) {
+    document.getElementById("result").innerHTML = "<p>غير موجود</p>";
+    return;
+  }
+
+  let html = `
+    <div class="card id-card">
+      <h3>${data.name}</h3>
+      <p>ID: ${data.id}</p>
+      <p>القرين: ${data.partner}</p>
+    </div>
+  `;
+
+  if (data.delivered) {
+    html += `
+      <div class="card">
+        <p class="status-ok">✔ تم الاستلام</p>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="card">
+        <p class="status-no">❌ لم يتم الاستلام</p>
+        <button onclick="deliver(${data.id})">تسليم</button>
+      </div>
+    `;
+  }
+
+  document.getElementById("result").innerHTML = html;
+}
+
+function deliver(id) {
+  fetch(API_URL + "?id=" + id + "&action=deliver")
+    .then(res => res.json())
+    .then(() => fetchData(id));
+}
+
+// تشغيل الكاميرا
+const html5QrCode = new Html5Qrcode("reader");
+
+html5QrCode.start(
+  { facingMode: "environment" },
+  {
+    fps: 10,
+    qrbox: 250
+  },
+  onScanSuccess
+);
+</script>
+
+</body>
+</html>
