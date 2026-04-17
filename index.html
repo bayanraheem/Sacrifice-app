@@ -3,203 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IAC | حملة الأضاحي</title>
+    <title>IAC | نظام الأضاحي السريع</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --iac-primary: #1b8f4c;
-            --iac-dark: #0e5a2f;
-            --iac-accent: #f1c40f;
-            --bg-color: #f8faf9;
-            --card-bg: #ffffff;
+            --bg-color: #f4f7f6;
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         body {
             font-family: 'Tajawal', sans-serif;
-            background: var(--bg-color);
-            margin: 0; padding: 0;
-            color: #2c3e50;
+            margin: 0; background: var(--bg-color);
             display: flex; flex-direction: column; min-height: 100vh;
         }
-
-        /* Header / Sidebar Mobile */
         header {
             background: var(--iac-primary);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky; top: 0; z-index: 100;
+            color: white; padding: 15px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        header h2 { margin: 0; font-size: 1.3rem; font-weight: 800; }
-        header p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.9; }
-
-        .main-container {
-            padding: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-            width: 100%;
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; width: 100%; }
+        
+        /* واجهة الإدخال */
+        .search-area {
+            background: white; padding: 15px; border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
-
-        /* Search & Scan Section */
-        .search-box {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         input {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid #edf2f0;
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
+            flex: 1; padding: 12px; border: 1px solid #ddd;
+            border-radius: 10px; outline: none; font-size: 1rem;
         }
-
-        input:focus { border-color: var(--iac-primary); }
-
-        .btn {
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 700;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-search { background: var(--iac-primary); color: white; padding: 0 20px; }
         .btn-scan {
-            width: 100%;
-            padding: 14px;
-            background: #eaf6ee;
-            color: var(--iac-primary);
-            border: 2px dashed var(--iac-primary);
+            width: 100%; padding: 15px; background: #eafaf1;
+            color: var(--iac-primary); border: 2px dashed var(--iac-primary);
+            border-radius: 10px; font-weight: 800; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
-        /* Beneficiary Card */
+        /* بطاقة النتائج */
         .result-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            display: none;
-            animation: slideUp 0.4s ease-out;
+            background: white; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); display: none;
+            border-top: 5px solid var(--iac-primary);
         }
-
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .card-header { background: #f1f8f4; padding: 15px 20px; border-bottom: 1px solid #e2eee7; }
-        .card-header h3 { margin: 0; color: var(--iac-dark); font-size: 1.1rem; }
-
         .card-body { padding: 20px; }
-        .info-item { margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px; }
-        .info-item label { font-size: 0.8rem; color: #7f8c8d; }
-        .info-item span { font-size: 1.1rem; font-weight: 700; color: #2c3e50; }
+        .data-row { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .data-row label { font-size: 0.75rem; color: #888; }
+        .data-row span { font-size: 1.1rem; font-weight: 700; color: #333; }
 
-        .status-pill {
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 800;
-            margin-top: 10px;
+        .status-box {
+            padding: 12px; border-radius: 10px; text-align: center;
+            font-weight: 800; margin-top: 10px;
         }
-        .pending { background: #fff9e6; color: #d4a017; border: 1px solid #f9ebbe; }
-        .delivered { background: #e7f7ed; color: #1b8f4c; border: 1px solid #c8e9d5; }
+        .not-delivered { background: #fff4e5; color: #d48806; }
+        .delivered { background: #e6f7ef; color: #1b8f4c; }
 
         .btn-confirm {
-            width: 100%;
-            padding: 16px;
-            background: var(--iac-primary);
-            color: white;
-            margin-top: 20px;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(27, 143, 76, 0.3);
+            width: 100%; padding: 16px; background: var(--iac-primary);
+            color: white; border: none; border-radius: 10px;
+            font-size: 1.1rem; font-weight: 800; margin-top: 15px; cursor: pointer;
         }
 
-        /* Camera Overlay (The Modal) */
-        #cameraOverlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            padding: 20px;
+        /* الكاميرا - طبقة كاملة */
+        #cam-container {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: black; z-index: 2000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
         }
-
-        #reader {
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
-            border-radius: 20px;
-            overflow: hidden;
-        }
-
-        .close-camera {
-            position: absolute;
-            top: 30px; right: 30px;
-            background: white;
-            border-radius: 50%;
-            width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; cursor: pointer;
+        #reader { width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; }
+        .cam-close {
+            position: absolute; top: 20px; right: 20px; color: white;
+            font-size: 2rem; cursor: pointer; z-index: 2001;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h2>مؤسسة IAC للإغاثة</h2>
-    <p>🐐 نظام توزيع الأضاحي 2026</p>
+    <h2>IAC | حملة الأضاحي</h2>
 </header>
 
-<div class="main-container">
-    <div class="search-box">
-        <div class="input-group">
-            <input type="text" id="idInput" placeholder="أدخل رقم الـ ID هنا...">
-            <button class="btn btn-search" onclick="fetchBeneficiary(document.getElementById('idInput').value)">بحث</button>
+<div class="container">
+    <div class="search-area">
+        <div class="input-row">
+            <input type="text" id="idInput" placeholder="ID المستفيد...">
+            <button onclick="fetchData(document.getElementById('idInput').value)" style="background:var(--iac-primary); color:white; border:none; padding:0 15px; border-radius:8px;">بحث</button>
         </div>
-        <button class="btn btn-scan" onclick="openScanner()">
-            📷 فتح ماسح الباركود
+        <button class="btn-scan" onclick="startFastScan()">
+            📷 مسح سريع (كاميرا)
         </button>
     </div>
 
     <div id="resultCard" class="result-card">
-        <div class="card-header"><h3>بيانات المستفيد</h3></div>
         <div class="card-body">
-            <div class="info-item"><label>الاسم الكامل</label><span id="resName">-</span></div>
-            <div class="info-item"><label>اسم القرين</label><span id="resSpouse">-</span></div>
-            <div class="info-item"><label>رقم الـ ID</label><span id="resId">-</span></div>
-            
-            <div id="statusPill" class="status-pill"></div>
-            <button id="deliverBtn" class="btn btn-confirm" onclick="processDelivery()">تأكيد التسليم الآن</button>
+            <div class="data-row"><label>اسم المستفيد</label><span id="resName"></span></div>
+            <div class="data-row"><label>اسم القرين</label><span id="resSpouse"></span></div>
+            <div class="data-row"><label>الـ ID</label><span id="resId"></span></div>
+            <div id="statusBox" class="status-box"></div>
+            <button id="deliverBtn" class="btn-confirm" onclick="confirmDelivery()">تأكيد التسليم</button>
         </div>
     </div>
 </div>
 
-<div id="cameraOverlay">
-    <div class="close-camera" onclick="closeScanner()">✕</div>
+<div id="cam-container">
+    <div class="cam-close" onclick="stopScan()">×</div>
     <div id="reader"></div>
-    <p style="color:white; text-align:center; margin-top:20px;">وجه الكاميرا نحو الباركود</p>
+    <p style="color:white; margin-top:20px;">جاري المسح التلقائي...</p>
 </div>
 
 <script>
@@ -207,95 +117,93 @@
     let currentId = "";
     let html5QrCode;
 
-    // محرك JSONP
-    function jsonpRequest(url) {
-        return new Promise((resolve, reject) => {
-            const callbackName = 'cb_' + Math.round(Math.random() * 1000000);
-            const script = document.createElement('script');
-            script.src = `${url}${url.includes('?') ? '&' : '?'}callback=${callbackName}`;
-            window[callbackName] = (data) => {
-                delete window[callbackName];
-                document.body.removeChild(script);
-                resolve(data);
+    // محرك JSONP للالتفاف على CORS
+    function jsonp(url) {
+        return new Promise((resolve) => {
+            const cb = 'cb' + Date.now();
+            const s = document.createElement('script');
+            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
+            window[cb] = (d) => {
+                delete window[cb];
+                s.remove();
+                resolve(d);
             };
-            script.onerror = () => reject(new Error('خطأ في الاتصال'));
-            document.body.appendChild(script);
+            document.body.appendChild(s);
         });
     }
 
-    // وظائف الكاميرا
-    async function openScanner() {
-        document.getElementById('cameraOverlay').style.display = 'flex';
+    // فتح الكاميرا الخلفية فوراً وبدء المسح
+    async function startFastScan() {
+        document.getElementById('cam-container').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
         
         try {
-            await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                document.getElementById('idInput').value = decodedText;
-                closeScanner();
-                fetchBeneficiary(decodedText); // البحث تلقائياً بعد المسح
-            });
+            await html5QrCode.start(
+                { facingMode: "environment" }, // إجبار الكاميرا الخلفية
+                { fps: 20, qrbox: 250 },
+                (text) => {
+                    // بمجرد قراءة أول قيمة:
+                    document.getElementById('idInput').value = text;
+                    stopScan(); // إغلاق الكاميرا فوراً
+                    fetchData(text); // البحث فوراً
+                }
+            );
         } catch (err) {
-            alert("تعذر فتح الكاميرا: " + err);
-            closeScanner();
+            alert("خطأ في الكاميرا: " + err);
+            stopScan();
         }
     }
 
-    function closeScanner() {
+    function stopScan() {
         if (html5QrCode) {
-            html5QrCode.stop().then(() => {
-                document.getElementById('cameraOverlay').style.display = 'none';
+            html5QrCode.stop().finally(() => {
+                document.getElementById('cam-container').style.display = 'none';
             });
         } else {
-            document.getElementById('cameraOverlay').style.display = 'none';
+            document.getElementById('cam-container').style.display = 'none';
         }
     }
 
-    // جلب البيانات
-    async function fetchBeneficiary(id) {
-        if(!id) return;
+    async function fetchData(id) {
+        if (!id) return;
         currentId = id.trim();
         document.getElementById('resultCard').style.display = 'none';
 
-        try {
-            const res = await jsonpRequest(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
-            if(res.status === "success") {
-                renderData(res.data);
-            } else {
-                alert("⚠️ الـ ID غير موجود");
-            }
-        } catch (e) { alert("فشل جلب البيانات"); }
+        const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
+        if (res.status === "success") {
+            showResult(res.data);
+        } else {
+            alert("المستفيد غير موجود");
+        }
     }
 
-    function renderData(data) {
+    function showResult(data) {
         document.getElementById('resultCard').style.display = 'block';
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resSpouse').innerText = data.spouse;
         document.getElementById('resId').innerText = data.id;
 
-        const pill = document.getElementById('statusPill');
+        const box = document.getElementById('statusBox');
         const btn = document.getElementById('deliverBtn');
 
-        if(data.isDelivered) {
-            pill.className = "status-pill delivered";
-            pill.innerText = "✅ تم الاستلام مسبقاً";
+        if (data.isDelivered) {
+            box.className = "status-box delivered";
+            box.innerText = "✅ تم الاستلام مسبقاً";
             btn.style.display = "none";
         } else {
-            pill.className = "status-pill pending";
-            pill.innerText = "⏳ جاهز للاستلام";
+            box.className = "status-box not-delivered";
+            box.innerText = "⏳ جاهز للتسليم الآن";
             btn.style.display = "block";
         }
     }
 
-    async function processDelivery() {
-        if(!confirm("هل أنت متأكد من تسليم الأضحية لهذا المستفيد؟")) return;
-        try {
-            const res = await jsonpRequest(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
-            if(res.status === "success") {
-                alert("🎉 تم التسليم بنجاح");
-                fetchBeneficiary(currentId);
-            }
-        } catch (e) { alert("حدث خطأ أثناء التحديث"); }
+    async function confirmDelivery() {
+        if (!confirm("تأكيد التسليم؟")) return;
+        const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
+        if (res.status === "success") {
+            alert("تم بنجاح");
+            fetchData(currentId);
+        }
     }
 </script>
 </body>
