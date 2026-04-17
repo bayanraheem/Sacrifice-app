@@ -136,7 +136,7 @@ button {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyZVNY5eJtjiJNi8yYL-VqtMwgTLaQKsGPq7ZVgQzXuwHZJxH9n1ymLLq8c9q4HNwYx6g/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzpn6EUzRlrTbnSdg8MO9CQd_B3oOPgYeTeEhV3_FQej-3Pj6nx1z6ay1jfjfNYN6CroA/exec";
 
 function setStatus(msg) {
   document.getElementById("status").innerText = msg;
@@ -154,17 +154,24 @@ function search() {
   setStatus("🔍 جارِ البحث...");
   loader();
 
-  fetch(API_URL + "?id=" + id)
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) {
-        setStatus("❌ غير موجود");
-        document.getElementById("result").innerHTML = "";
-      } else {
-        setStatus("✅ تم العثور");
-        render(data);
-      }
-    });
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ id: id }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      setStatus("❌ غير موجود");
+      document.getElementById("result").innerHTML = "";
+    } else {
+      setStatus("✅ تم العثور");
+      render(data);
+    }
+  })
+  .catch(() => setStatus("❌ خطأ في الاتصال"));
 }
 
 /* ===================== RENDER ===================== */
@@ -201,13 +208,22 @@ function deliver(id) {
   setStatus("⏳ جاري التسليم...");
   loader();
 
-  fetch(API_URL + "?id=" + id + "&action=deliver")
-    .then(r => r.json())
-    .then(() => {
-      setStatus("✅ تم التسليم");
-      document.getElementById("idInput").value = id;
-      search();
-    });
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      id: id,
+      action: "deliver"
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.json())
+  .then(() => {
+    setStatus("✅ تم التسليم");
+    document.getElementById("idInput").value = id;
+    search();
+  });
 }
 
 /* ===================== SCANNER ===================== */
