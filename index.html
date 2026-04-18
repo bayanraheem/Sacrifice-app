@@ -197,7 +197,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5_iVBQ8OJB_acU6QcbQNzVPhMAr1_1v2tzSXeQEjIiEoojbOT5NhBKDFcVwv7v0xxeg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwt_zjNWmYtuEeJn9wte9SFiEHCB1uB0CVZQRm8Mr63zNrh0owANt_Mo-SaQrnOQHpXxA/exec";
     let currentId = "";
     let html5QrCode;
     let isCamOpen = false;
@@ -325,39 +325,40 @@ async function handleDeliveryFlow() {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0);
         
-        // تقليل الجودة لـ 0.4 لتسريع الرفع وتجنب قيود الحجم في طلبات POST
-        const imageData = canvas.toDataURL('image/jpeg', 0.4);
+        // استخدام جودة متوسطة لضمان وصول الملف كاملاً
+        const imageData = canvas.toDataURL('image/jpeg', 0.5);
 
         if (video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
         }
         video.style.display = "none";
 
-        // استخدام FormData بدلاً من JSON الخام لتجاوز مشاكل CORS في Apps Script
-        const formData = new FormData();
-        formData.append('action', 'markAsDeliveredWithImage');
-        formData.append('id', currentId);
-        formData.append('image', imageData);
+        // إرسال البيانات كـ JSON نصي بسيط
+        const payload = JSON.stringify({
+            action: "markAsDeliveredWithImage",
+            id: currentId,
+            image: imageData
+        });
 
         fetch(SCRIPT_URL, {
             method: "POST",
-            mode: "no-cors", // ضروري لجوجل سكريبت
-            body: new URLSearchParams(formData) // إرسال البيانات كـ Form-Encoded
+            mode: "no-cors", 
+            headers: {
+                "Content-Type": "text/plain" // نستخدم text/plain لتجنب مشاكل الـ Preflight في CORS
+            },
+            body: payload
         })
         .then(() => {
-            // بما أننا في وضع no-cors، المتصفح سيعتبرها "فشل" تقنياً لكنها تصل بنجاح
-            // سننتظر 3 ثوانٍ لإعطاء فرصة للمعالجة ثم نحدث الصفحة
             setTimeout(() => {
-                alert("تم إرسال البيانات بنجاح");
+                alert("تم إرسال الطلب بنجاح. سيتم تحديث الحالة الآن.");
                 isCamOpen = false;
                 dBtn.disabled = false;
-                fetchData(currentId);
-            }, 3000);
+                fetchData(currentId); // تحديث البيانات
+            }, 3500);
         })
         .catch(err => {
-            alert("خطأ في الشبكة");
+            alert("خطأ في الشبكة: " + err);
             dBtn.disabled = false;
-            isCamOpen = false;
         });
     }
 }
