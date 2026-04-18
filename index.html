@@ -11,8 +11,9 @@
             --iac-primary: #1b8f4c;
             --iac-dark: #0a4d29;
             --bg-color: #f0f4f3;
-            --glass: rgba(255, 255, 255, 0.95);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -25,27 +26,36 @@
             display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        /* --- Header --- */
+        /* --- Header (Updated to White) --- */
         header {
-            background: var(--iac-primary);
-            color: white;
-            padding: 12px 15px;
+            background: var(--white);
+            color: var(--iac-primary); /* نص أخضر */
+            padding: 10px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            border-bottom: 1px solid #eef2f1;
         }
 
-        .header-right { display: flex; align-items: center; gap: 10px; }
-        .logo { width: 40px; height: 40px; object-fit: contain; }
-        .header-title { font-size: 1rem; font-weight: 800; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 45px; height: 45px; object-fit: contain; }
+        .header-title { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
 
         .sidebar-toggle {
-            background: none; border: none; color: white;
-            font-size: 1.5rem; cursor: pointer; padding: 5px;
+            background: #f0fdf4; /* خلفية خضراء باهتة جداً للايقونة */
+            border: none; 
+            color: var(--iac-primary);
+            font-size: 1.4rem; 
+            cursor: pointer; 
+            padding: 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* --- Sidebar --- */
@@ -65,15 +75,15 @@
 
         .search-area {
             background: white; padding: 20px; border-radius: 20px;
-            box-shadow: var(--shadow); margin-bottom: 25px;
+            box-shadow: var(--card-shadow); margin-bottom: 25px;
         }
 
         .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
 
         input {
-            flex: 1; padding: 14px; border: 2px solid #eef2f1;
+            flex: 1; padding: 14px; border: 2px solid #f1f5f4;
             border-radius: 12px; outline: none; font-family: inherit; font-size: 1rem;
-            transition: 0.3s; background: #f8faf9;
+            transition: 0.3s; background: #f9fbfb;
         }
         input:focus { border-color: var(--iac-primary); background: white; }
 
@@ -92,7 +102,7 @@
         /* --- Result Card --- */
         .result-card {
             background: white; border-radius: 25px; overflow: hidden;
-            box-shadow: var(--shadow); display: none;
+            box-shadow: var(--card-shadow); display: none;
             border-top: 6px solid var(--iac-primary);
             animation: slideUp 0.4s ease-out;
         }
@@ -103,14 +113,14 @@
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
         .data-row:last-child { border: none; }
         .data-row label { font-size: 0.8rem; color: #8898aa; display: block; margin-bottom: 4px; }
-        .data-row span { font-size: 1.1rem; font-weight: 700; color: #32325d; }
+        .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
 
         .status-box {
             padding: 15px; border-radius: 15px; text-align: center;
             font-weight: 800; margin-top: 10px; font-size: 0.95rem;
         }
-        .not-delivered { background: #fff4e5; color: #d48806; }
-        .delivered { background: #e6f7ef; color: #1b8f4c; }
+        .not-delivered { background: #fff4e5; color: #d48806; border: 1px solid #ffe8cc; }
+        .delivered { background: #e6f7ef; color: #1b8f4c; border: 1px solid #c3e6cb; }
 
         .btn-confirm {
             width: 100%; padding: 18px; background: var(--iac-primary);
@@ -119,7 +129,7 @@
             box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
         }
 
-        /* --- Camera Full Screen --- */
+        /* --- Camera (Unchanged Logic/UI) --- */
         #cam-container {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: black; z-index: 3000; display: none;
@@ -137,9 +147,11 @@
 <header>
     <div class="header-right">
         <img src="https://i.postimg.cc/BvLv7FDL/images.jpg?raw=true" alt="IAC Logo" class="logo">
-        <span class="header-title">مؤسسة الإغاثة IAC | حملة الأضاحي</span>
+        <span class="header-title">مؤسسة الإغاثة IAC<br>حملة الأضاحي</span>
     </div>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
 </header>
 
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
@@ -158,7 +170,8 @@
             <button class="btn-search" onclick="fetchData(document.getElementById('idInput').value)">بحث</button>
         </div>
         <button class="btn-scan" onclick="startFastScan()">
-            📷 مسح باركود سريع
+            <span>📷</span>
+            <span>مسح باركود سريع</span>
         </button>
     </div>
 
@@ -184,14 +197,12 @@
     let currentId = "";
     let html5QrCode;
 
-    // Sidebar Logic
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('active');
         const overlay = document.getElementById('overlay');
         overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
     }
 
-    // --- الـ Logic الخاص بكِ (بدون تعديل) ---
     function jsonp(url) {
         return new Promise((resolve) => {
             const cb = 'cb' + Date.now();
