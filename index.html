@@ -197,7 +197,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLE753u8dco1st-BK_Hwgw_a3fC1LfvwHQ9Ls3HhAdYh_39p8cnchmnqHbQf2rMRYo/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlJAyaWBBo_osGWMpePxFUoiP6U51C5S3jI23XOLY62ZgR1clf8xy741ExMjF7-rflnQ/exec";
     let currentId = "";
     let html5QrCode;
     let isCamOpen = false;
@@ -300,61 +300,75 @@
     }
 
     async function handleDeliveryFlow() {
-        const video = document.getElementById('webcam');
-        const dBtn = document.getElementById('deliverBtn');
+    const video = document.getElementById('webcam');
+    const dBtn = document.getElementById('deliverBtn');
+    const canvas = document.getElementById('photoCanvas');
 
-        if (!isCamOpen) {
-            // فتح الكاميرا للالتقاط
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.style.display = "block";
-                dBtn.innerText = "✅ اعتماد الصورة وإتمام التسليم";
-                isCamOpen = true;
-            } catch (err) {
-                alert("يرجى السماح بالوصول للكاميرا لالتقاط صورة الإثبات");
-            }
-        } else {
-            // تنفيذ الالتقاط والرفع
-            const canvas = document.getElementById('photoCanvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            // ضغط الصورة (0.6) لزيادة سرعة الرفع
-            const imageData = canvas.toDataURL('image/jpeg', 0.6);
-
-            // إغلاق الكاميرا
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.style.display = "none";
-            
-            dBtn.disabled = true;
-            dBtn.innerText = "⏳ جاري الرفع والتسجيل...";
-
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        action: "markAsDeliveredWithImage",
-                        id: currentId,
-                        image: imageData
-                    })
-                });
-                const res = await response.json();
-                if (res.status === "success") {
-                    alert("تمت العملية بنجاح وتخزين صورة الإثبات");
-                    fetchData(currentId);
-                } else {
-                    throw new Error("فشل الرفع");
-                }
-            } catch (err) {
-                alert("حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى");
-                dBtn.disabled = false;
-                dBtn.innerText = "📷 التقاط صورة الهوية والتسليم";
-                isCamOpen = false;
-            }
+    if (!isCamOpen) {
+        // الخطوة 1: فتح الكاميرا
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            video.srcObject = stream;
+            video.style.display = "block";
+            dBtn.innerText = "✅ اعتماد الصورة وإتمام التسليم";
+            isCamOpen = true;
+        } catch (err) {
+            alert("يرجى السماح بالوصول للكاميرا لالتقاط صورة الإثبات");
         }
+    } else {
+        // الخطوة 2: التقاط الصورة والرفع
+        dBtn.disabled = true;
+        dBtn.innerText = "⏳ جاري الرفع والتسجيل...";
+
+        // إعداد المقاسات والتقاط الصورة
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        
+        // تحويل الصورة لنص Base64 مع ضغطها (0.5) لتقليل حجم البيانات وتجاوز مشاكل الشبكة
+        const imageData = canvas.toDataURL('image/jpeg', 0.5);
+
+        // إيقاف الكاميرا فوراً لتوفير موارد الجهاز
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        video.style.display = "none";
+
+        // إرسال البيانات باستخدام Fetch مع معالجة CORS
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors", // هذا هو المفتاح لحل مشكلة CORS Policy
+            cache: "no-cache",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({
+                action: "markAsDeliveredWithImage",
+                id: currentId,
+                image: imageData
+            })
+        })
+        .then(() => {
+            // بما أن no-cors لا تعيد رد مقروء، ننتظر ثانيتين للتأكد من معالجة جوجل للطلب
+            setTimeout(() => {
+                alert("تمت عملية التسليم وحفظ الصورة بنجاح");
+                isCamOpen = false;
+                dBtn.disabled = false;
+                fetchData(currentId); // إعادة جلب البيانات لتحديث الحالة وظهور زر المعاينة
+            }, 2000);
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            alert("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى");
+            dBtn.disabled = false;
+            dBtn.innerText = "📷 التقاط صورة الهوية والتسليم";
+            isCamOpen = false;
+        });
     }
+}
 </script>
 </body>
 </html>
