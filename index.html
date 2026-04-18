@@ -33,9 +33,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            position: sticky; top: 0; z-index: 1000;
             box-shadow: var(--shadow);
             border-bottom: 1px solid #eef2f1;
         }
@@ -43,30 +41,6 @@
         .header-right { display: flex; align-items: center; gap: 12px; }
         .logo { width: 45px; height: 45px; object-fit: contain; }
         .header-title { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
-
-        .sidebar-toggle {
-            background: #f0fdf4;
-            border: none; 
-            color: var(--iac-primary);
-            font-size: 1.4rem; 
-            cursor: pointer; 
-            padding: 8px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .sidebar {
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
-            background: white; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.1); padding: 20px;
-        }
-        .sidebar.active { left: 0; }
-        .sidebar-header { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; font-weight: 800; color: var(--iac-primary); }
-        .sidebar-item { padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-        .sidebar-item:hover { background: #f0fdf4; color: var(--iac-primary); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
 
         .container { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; }
 
@@ -77,7 +51,7 @@
 
         .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
 
-        input {
+        input[type="text"] {
             flex: 1; padding: 14px; border: 2px solid #f1f5f4;
             border-radius: 12px; outline: none; font-family: inherit; font-size: 1rem;
             transition: 0.3s; background: #f9fbfb;
@@ -107,7 +81,6 @@
 
         .card-body { padding: 25px; }
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
-        .data-row:last-child { border: none; }
         .data-row label { font-size: 0.8rem; color: #8898aa; display: block; margin-bottom: 4px; }
         .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
 
@@ -118,11 +91,27 @@
         .not-delivered { background: #fff4e5; color: #d48806; border: 1px solid #ffe8cc; }
         .delivered { background: #e6f7ef; color: #1b8f4c; border: 1px solid #c3e6cb; }
 
+        .btn-confirm, .btn-view-photo {
+            width: 100%; padding: 18px; border: none; border-radius: 15px;
+            font-size: 1.1rem; font-weight: 800; margin-top: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
         .btn-confirm {
-            width: 100%; padding: 18px; background: var(--iac-primary);
-            color: white; border: none; border-radius: 15px;
-            font-size: 1.1rem; font-weight: 800; margin-top: 20px; cursor: pointer;
+            background: var(--iac-primary); color: white;
             box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
+        }
+
+        .btn-view-photo {
+            background: #3498db; color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: none;
+        }
+
+        #photoPreview {
+            width: 100%; border-radius: 15px; margin-top: 15px; display: none;
+            border: 3px solid var(--iac-primary);
+            object-fit: cover; max-height: 300px;
         }
 
         #cam-container {
@@ -130,17 +119,8 @@
             background: black; z-index: 3000; display: none;
             flex-direction: column; align-items: center; justify-content: center;
         }
-        #reader { width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; border: 2px solid var(--iac-primary); }
-        .cam-close {
-            position: absolute; top: 30px; right: 30px; color: white;
-            font-size: 2.5rem; cursor: pointer; z-index: 3001; line-height: 1;
-        }
-
-        /* الإضافة الجديدة: معاينة الصورة */
-        #photoPreview {
-            width: 100%; border-radius: 15px; margin-top: 15px; display: none;
-            border: 2px solid #eee;
-        }
+        #reader { width: 90%; max-width: 400px; border-radius: 20px; border: 2px solid var(--iac-primary); }
+        .cam-close { position: absolute; top: 30px; right: 30px; color: white; font-size: 2.5rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -150,19 +130,7 @@
         <img src="https://i.postimg.cc/BvLv7FDL/images.jpg?raw=true" alt="IAC Logo" class="logo">
         <span class="header-title">مؤسسة الإغاثة | حملة الأضاحي</span>
     </div>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-    </button>
 </header>
-
-<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-<div id="sidebar" class="sidebar">
-    <div class="sidebar-header">القائمة الرئيسية</div>
-    <div class="sidebar-item">🏠 الصفحة الرئيسية</div>
-    <div class="sidebar-item">📊 إحصائيات التوزيع</div>
-    <div class="sidebar-item">⚙️ الإعدادات</div>
-    <div class="sidebar-item" style="color: #e74c3c;">🚪 تسجيل الخروج</div>
-</div>
 
 <div class="container">
     <div class="search-area">
@@ -185,7 +153,8 @@
             
             <img id="photoPreview" src="">
 
-            <button id="deliverBtn" class="btn-confirm" onclick="initiateDelivery()">📷 تصوير وتسليم</button>
+            <button id="deliverBtn" class="btn-confirm" onclick="initiateDelivery()">📷 التقاط صورة وتسليم</button>
+            <button id="viewPhotoBtn" class="btn-view-photo" onclick="showSavedPhoto()">🖼️ عرض صورة الاستلام</button>
         </div>
     </div>
 </div>
@@ -195,24 +164,17 @@
 <div id="cam-container">
     <div class="cam-close" onclick="stopScan()">×</div>
     <div id="reader"></div>
-    <p style="color:white; margin-top:20px; font-weight: 500;">جاري المسح التلقائي...</p>
+    <p style="color:white; margin-top:20px;">جاري المسح...</p>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbys-VA_DwNmV-EMQKarsrPoY5vN8i6kFVUgG0MjjJpXFJ5Dub8kMmeoarPgEhUSl49DmA/exec";
-    
-    // إعدادات Cloudinary (للتجربة حالياً)
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2utOP-Wl2Z9F29X5kKIcKUGNeMDIQNiGXPnxP-IvSfkXtuLX2GemxuG-Cm8GAoNLGnA/exec";
     const CLOUD_NAME = "dtnpfucnd"; 
     const UPLOAD_PRESET = "images_database";
 
     let currentId = "";
+    let savedPhotoUrl = "";
     let html5QrCode;
-
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('active');
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
-    }
 
     function jsonp(url) {
         return new Promise((resolve) => {
@@ -232,28 +194,17 @@
         document.getElementById('cam-container').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
         try {
-            await html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 20, qrbox: 250 },
-                (text) => {
-                    document.getElementById('idInput').value = text;
-                    stopScan();
-                    fetchData(text);
-                }
-            );
-        } catch (err) {
-            alert("خطأ في الكاميرا: " + err);
-            stopScan();
-        }
+            await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+                document.getElementById('idInput').value = text;
+                stopScan();
+                fetchData(text);
+            });
+        } catch (err) { stopScan(); }
     }
 
     function stopScan() {
         if (html5QrCode) {
-            html5QrCode.stop().finally(() => {
-                document.getElementById('cam-container').style.display = 'none';
-            });
-        } else {
-            document.getElementById('cam-container').style.display = 'none';
+            html5QrCode.stop().finally(() => { document.getElementById('cam-container').style.display = 'none'; });
         }
     }
 
@@ -274,26 +225,37 @@
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resSpouse').innerText = data.spouse;
         document.getElementById('resId').innerText = data.id;
-        const box = document.getElementById('statusBox');
-        const btn = document.getElementById('deliverBtn');
         
-        // إعادة ضبط شكل الزر والمعاينة
-        document.getElementById('photoPreview').style.display = 'none';
-        btn.disabled = false;
-        btn.innerText = "📷 تصوير وتسليم";
+        savedPhotoUrl = data.photoUrl; // تخزين رابط الصورة المسجلة
+        
+        const box = document.getElementById('statusBox');
+        const dBtn = document.getElementById('deliverBtn');
+        const vBtn = document.getElementById('viewPhotoBtn');
+        const preview = document.getElementById('photoPreview');
+
+        preview.style.display = 'none';
 
         if (data.isDelivered) {
             box.className = "status-box delivered";
             box.innerText = "✅ تم الاستلام مسبقاً";
-            btn.style.display = "none";
+            dBtn.style.display = "none";
+            vBtn.style.display = (savedPhotoUrl) ? "flex" : "none";
         } else {
             box.className = "status-box not-delivered";
             box.innerText = "⏳ جاهز للتسليم الآن";
-            btn.style.display = "block";
+            dBtn.style.display = "flex";
+            vBtn.style.display = "none";
         }
     }
 
-    // الدالة الجديدة لمعالجة التسليم مع الصورة
+    function showSavedPhoto() {
+        const preview = document.getElementById('photoPreview');
+        preview.src = savedPhotoUrl;
+        preview.style.display = 'block';
+        // تمرير الصفحة للصورة
+        preview.scrollIntoView({ behavior: 'smooth' });
+    }
+
     function initiateDelivery() {
         document.getElementById('cameraInput').click();
     }
@@ -305,41 +267,31 @@
         const btn = document.getElementById('deliverBtn');
         const preview = document.getElementById('photoPreview');
 
-        // 1. إظهار المعاينة
         preview.src = URL.createObjectURL(file);
         preview.style.display = 'block';
-        
         btn.disabled = true;
-        btn.innerText = "⏳ جاري رفع الصورة...";
+        btn.innerText = "⏳ جاري الرفع والاعتماد...";
 
-        // 2. رفع الصورة لـ Cloudinary
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
 
         try {
             const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
+                method: 'POST', body: formData
             });
             const cloudData = await cloudRes.json();
             const imageUrl = cloudData.secure_url;
 
-            // 3. إرسال رابط الصورة لجوجل شيت عبر JSONP (doGet)
-            btn.innerText = "⏳ جاري تحديث السجلات...";
             const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}&img=${encodeURIComponent(imageUrl)}`);
             
             if (res.status === "success") {
-                alert("✅ تم التسليم بنجاح وحفظ الصورة");
+                alert("✅ اكتملت العملية بنجاح");
                 fetchData(currentId);
-            } else {
-                alert("❌ فشل تحديث السجلات");
-                btn.disabled = false;
             }
         } catch (err) {
-            alert("❌ خطأ في الاتصال: " + err);
+            alert("❌ خطأ: " + err);
             btn.disabled = false;
-            btn.innerText = "📷 إعادة المحاولة";
         }
     };
 </script>
