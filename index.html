@@ -3,60 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IAC | نظام التوزيع</title>
+    <title>IAC | حملة الأضاحي</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --iac-primary: #1b8f4c; --bg-color: #f0f4f3; --white: #ffffff; }
-        body { font-family: 'Tajawal', sans-serif; margin: 0; background: var(--bg-color); }
-        header { background: var(--white); padding: 10px 15px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .search-area { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        :root {
+            --iac-primary: #1b8f4c;
+            --iac-dark: #0a4d29;
+            --bg-color: #f0f4f3;
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            margin: 0; padding: 0;
+            background: var(--bg-color);
+            color: #2c3e50;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        header {
+            background: var(--white);
+            color: var(--iac-primary);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            border-bottom: 1px solid #eef2f1;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 45px; height: 45px; object-fit: contain; }
+        .header-title { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
+
+        .sidebar-toggle {
+            background: #f0fdf4;
+            border: none; 
+            color: var(--iac-primary);
+            font-size: 1.4rem; 
+            cursor: pointer; 
+            padding: 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: white; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1); padding: 20px;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-header { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; font-weight: 800; color: var(--iac-primary); }
+        .sidebar-item { padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .sidebar-item:hover { background: #f0fdf4; color: var(--iac-primary); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
+
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; }
+
+        .search-area {
+            background: white; padding: 20px; border-radius: 20px;
+            box-shadow: var(--card-shadow); margin-bottom: 25px;
+        }
+
         .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
-        input { flex: 1; padding: 14px; border: 2px solid #f1f5f4; border-radius: 12px; outline: none; }
-        .btn-search { background: var(--iac-primary); color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .result-card { background: white; border-radius: 25px; padding: 25px; margin-top: 20px; display: none; border-top: 6px solid var(--iac-primary); }
-        .data-row { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .data-row label { font-size: 0.8rem; color: #888; display: block; }
-        .data-row span { font-size: 1.1rem; font-weight: 700; }
-        #webcam { width: 100%; border-radius: 15px; margin-top: 10px; display: none; background: #000; }
-        .status-box { padding: 15px; border-radius: 15px; text-align: center; font-weight: 800; margin-top: 10px; }
-        .btn-confirm { width: 100%; padding: 18px; background: var(--iac-primary); color: white; border: none; border-radius: 15px; font-weight: 800; margin-top: 20px; cursor: pointer; }
+
+        input {
+            flex: 1; padding: 14px; border: 2px solid #f1f5f4;
+            border-radius: 12px; outline: none; font-family: inherit; font-size: 1rem;
+            transition: 0.3s; background: #f9fbfb;
+        }
+        input:focus { border-color: var(--iac-primary); background: white; }
+
+        .btn-search {
+            background: var(--iac-primary); color: white; border: none;
+            padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer;
+        }
+
+        .btn-scan {
+            width: 100%; padding: 16px; background: #f0fdf4;
+            color: var(--iac-primary); border: 2px dashed var(--iac-primary);
+            border-radius: 12px; font-weight: 800; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .result-card {
+            background: white; border-radius: 25px; overflow: hidden;
+            box-shadow: var(--card-shadow); display: none;
+            border-top: 6px solid var(--iac-primary);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .card-body { padding: 25px; }
+        .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
+        .data-row:last-child { border: none; }
+        .data-row label { font-size: 0.8rem; color: #8898aa; display: block; margin-bottom: 4px; }
+        .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
+
+        .status-box {
+            padding: 15px; border-radius: 15px; text-align: center;
+            font-weight: 800; margin-top: 10px; font-size: 0.95rem;
+        }
+        .not-delivered { background: #fff4e5; color: #d48806; border: 1px solid #ffe8cc; }
+        .delivered { background: #e6f7ef; color: #1b8f4c; border: 1px solid #c3e6cb; }
+
+        .btn-confirm {
+            width: 100%; padding: 18px; background: var(--iac-primary);
+            color: white; border: none; border-radius: 15px;
+            font-size: 1.1rem; font-weight: 800; margin-top: 20px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
+        }
+
+        #cam-container {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: black; z-index: 3000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        #reader { width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; border: 2px solid var(--iac-primary); }
+        .cam-close {
+            position: absolute; top: 30px; right: 30px; color: white;
+            font-size: 2.5rem; cursor: pointer; z-index: 3001; line-height: 1;
+        }
+
+        /* الإضافة الجديدة: معاينة الصورة */
+        #photoPreview {
+            width: 100%; border-radius: 15px; margin-top: 15px; display: none;
+            border: 2px solid #eee;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="https://i.postimg.cc/BvLv7FDL/images.jpg" style="width:40px; margin-left:10px;">
-    <span style="font-weight:800;">مؤسسة الإغاثة | حملة الأضاحي</span>
+    <div class="header-right">
+        <img src="https://i.postimg.cc/BvLv7FDL/images.jpg?raw=true" alt="IAC Logo" class="logo">
+        <span class="header-title">مؤسسة الإغاثة | حملة الأضاحي</span>
+    </div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
 </header>
+
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-header">القائمة الرئيسية</div>
+    <div class="sidebar-item">🏠 الصفحة الرئيسية</div>
+    <div class="sidebar-item">📊 إحصائيات التوزيع</div>
+    <div class="sidebar-item">⚙️ الإعدادات</div>
+    <div class="sidebar-item" style="color: #e74c3c;">🚪 تسجيل الخروج</div>
+</div>
 
 <div class="container">
     <div class="search-area">
         <div class="input-row">
-            <input type="text" id="idInput" placeholder="أدخل رقم الـ ID...">
+            <input type="text" id="idInput" placeholder="أدخل رقم الـ ID للمستفيد...">
             <button class="btn-search" onclick="fetchData(document.getElementById('idInput').value)">بحث</button>
         </div>
+        <button class="btn-scan" onclick="startFastScan()">
+            <span>📷</span>
+            <span>مسح باركود سريع</span>
+        </button>
     </div>
 
     <div id="resultCard" class="result-card">
-        <div class="data-row"><label>اسم المستفيد</label><span id="resName"></span></div>
-        <div class="data-row"><label>اسم القرين</label><span id="resSpouse"></span></div>
-        <video id="webcam" autoplay playsinline></video>
-        <canvas id="photoCanvas" style="display:none;"></canvas>
-        <div id="statusBox" class="status-box"></div>
-        <button id="deliverBtn" class="btn-confirm" onclick="handleDeliveryFlow()">📷 التقاط صورة التسليم</button>
+        <div class="card-body">
+            <div class="data-row"><label>اسم المستفيد</label><span id="resName"></span></div>
+            <div class="data-row"><label>اسم القرين</label><span id="resSpouse"></span></div>
+            <div class="data-row"><label>رقم الـ ID</label><span id="resId"></span></div>
+            <div id="statusBox" class="status-box"></div>
+            
+            <img id="photoPreview" src="">
+
+            <button id="deliverBtn" class="btn-confirm" onclick="initiateDelivery()">📷 تصوير وتسليم</button>
+        </div>
     </div>
 </div>
 
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+
+<div id="cam-container">
+    <div class="cam-close" onclick="stopScan()">×</div>
+    <div id="reader"></div>
+    <p style="color:white; margin-top:20px; font-weight: 500;">جاري المسح التلقائي...</p>
+</div>
+
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRG2iKSQWSllw6ZEj1okQevWagT6MQV9AmrSzq4O2b4PwwhDQ-UGdVyH-wChfzhc-H2Q/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbys-VA_DwNmV-EMQKarsrPoY5vN8i6kFVUgG0MjjJpXFJ5Dub8kMmeoarPgEhUSl49DmA/exec";
+    
+    // إعدادات Cloudinary (للتجربة حالياً)
+    const CLOUD_NAME = "dtnpfucnd"; 
+    const UPLOAD_PRESET = "images_database";
+
     let currentId = "";
-    let isCamOpen = false;
+    let html5QrCode;
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function jsonp(url) {
+        return new Promise((resolve) => {
+            const cb = 'cb' + Date.now();
+            const s = document.createElement('script');
+            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
+            window[cb] = (d) => {
+                delete window[cb];
+                s.remove();
+                resolve(d);
+            };
+            document.body.appendChild(s);
+        });
+    }
+
+    async function startFastScan() {
+        document.getElementById('cam-container').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        try {
+            await html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 20, qrbox: 250 },
+                (text) => {
+                    document.getElementById('idInput').value = text;
+                    stopScan();
+                    fetchData(text);
+                }
+            );
+        } catch (err) {
+            alert("خطأ في الكاميرا: " + err);
+            stopScan();
+        }
+    }
+
+    function stopScan() {
+        if (html5QrCode) {
+            html5QrCode.stop().finally(() => {
+                document.getElementById('cam-container').style.display = 'none';
+            });
+        } else {
+            document.getElementById('cam-container').style.display = 'none';
+        }
+    }
 
     async function fetchData(id) {
         if (!id) return;
         currentId = id.trim();
+        document.getElementById('resultCard').style.display = 'none';
         const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
         if (res.status === "success") {
             showResult(res.data);
@@ -69,95 +273,75 @@
         document.getElementById('resultCard').style.display = 'block';
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resSpouse').innerText = data.spouse;
+        document.getElementById('resId').innerText = data.id;
         const box = document.getElementById('statusBox');
         const btn = document.getElementById('deliverBtn');
-        const video = document.getElementById('webcam');
-
-        video.style.display = "none";
-        isCamOpen = false;
+        
+        // إعادة ضبط شكل الزر والمعاينة
+        document.getElementById('photoPreview').style.display = 'none';
+        btn.disabled = false;
+        btn.innerText = "📷 تصوير وتسليم";
 
         if (data.isDelivered) {
-            box.style.background = "#e6f7ef"; box.style.color = "#1b8f4c";
+            box.className = "status-box delivered";
             box.innerText = "✅ تم الاستلام مسبقاً";
             btn.style.display = "none";
         } else {
-            box.style.background = "#fff4e5"; box.style.color = "#d48806";
+            box.className = "status-box not-delivered";
             box.innerText = "⏳ جاهز للتسليم الآن";
             btn.style.display = "block";
-            btn.innerText = "📷 التقاط صورة الهوية والتسليم";
         }
     }
 
-    async function handleDeliveryFlow() {
-        const video = document.getElementById('webcam');
+    // الدالة الجديدة لمعالجة التسليم مع الصورة
+    function initiateDelivery() {
+        document.getElementById('cameraInput').click();
+    }
+
+    document.getElementById('cameraInput').onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
         const btn = document.getElementById('deliverBtn');
+        const preview = document.getElementById('photoPreview');
 
-        if (!isCamOpen) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.style.display = "block";
-                btn.innerText = "✅ اعتماد الصورة وإرسال";
-                isCamOpen = true;
-            } catch (err) { alert("يرجى السماح بالكاميرا"); }
-        } else {
-            sendData();
+        // 1. إظهار المعاينة
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        
+        btn.disabled = true;
+        btn.innerText = "⏳ جاري رفع الصورة...";
+
+        // 2. رفع الصورة لـ Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+
+        try {
+            const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const cloudData = await cloudRes.json();
+            const imageUrl = cloudData.secure_url;
+
+            // 3. إرسال رابط الصورة لجوجل شيت عبر JSONP (doGet)
+            btn.innerText = "⏳ جاري تحديث السجلات...";
+            const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}&img=${encodeURIComponent(imageUrl)}`);
+            
+            if (res.status === "success") {
+                alert("✅ تم التسليم بنجاح وحفظ الصورة");
+                fetchData(currentId);
+            } else {
+                alert("❌ فشل تحديث السجلات");
+                btn.disabled = false;
+            }
+        } catch (err) {
+            alert("❌ خطأ في الاتصال: " + err);
+            btn.disabled = false;
+            btn.innerText = "📷 إعادة المحاولة";
         }
-    }
-
-async function sendData() {
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photoCanvas');
-    const btn = document.getElementById('deliverBtn');
-
-    btn.disabled = true;
-    btn.innerText = "⏳ جاري الحفظ... يرجى عدم الإغلاق";
-
-    // تصغير أبعاد الصورة لتقليل حجم البيانات (مهم جداً لجوجل سكريبت)
-    canvas.width = 640; 
-    canvas.height = 480;
-    canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
-    
-    // جودة 0.2 كافية جداً للتوثيق وتضمن استقرار الرفع
-    const imageData = canvas.toDataURL('image/jpeg', 0.2); 
-
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-    }
-
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors', // لتجنب مشاكل CORS
-        headers: {
-            'Content-Type': 'text/plain' // نرسلها كنص خام ليتجاوز الحماية
-        },
-        body: JSON.stringify({
-            id: currentId,
-            image: imageData
-        })
-    })
-    .then(() => {
-        // ننتظر 5 ثوانٍ ليعطي فرصة للسكريبت لإنهاء المعالجة في الخلفية
-        setTimeout(() => {
-            alert("تم إرسال الصورة وتحديث البيانات بنجاح!");
-            location.reload(); 
-        }, 5000);
-    })
-    .catch(err => {
-        console.error(err);
-        alert("حدث خطأ في الشبكة، حاول مرة أخرى");
-        btn.disabled = false;
-    });
-}
-    function jsonp(url) {
-        return new Promise(resolve => {
-            const cb = 'cb' + Date.now();
-            const s = document.createElement('script');
-            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
-            window[cb] = d => { delete window[cb]; s.remove(); resolve(d); };
-            document.body.appendChild(s);
-        });
-    }
+    };
 </script>
 </body>
 </html>
