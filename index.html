@@ -1,289 +1,235 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IAC | حملة الأضاحي</title>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --iac-primary: #1b8f4c;
-            --iac-dark: #0a4d29;
-            --bg-color: #f0f4f3;
-            --white: #ffffff;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAC | حملة الأضاحي</title>
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-        body {
-            font-family: 'Tajawal', sans-serif;
-            margin: 0; padding: 0;
-            background: var(--bg-color);
-            color: #2c3e50;
-            display: flex; flex-direction: column; min-height: 100vh;
-        }
+<style>
+body { font-family: Arial; background:#f4f4f4; margin:0; }
+.container { padding:20px; max-width:500px; margin:auto; }
 
-        /* --- Header (Updated to White) --- */
-        header {
-            background: var(--white);
-            color: var(--iac-primary); /* نص أخضر */
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: var(--shadow);
-            border-bottom: 1px solid #eef2f1;
-        }
+input, button {
+  padding:12px; margin:5px 0; width:100%;
+  border-radius:10px; border:1px solid #ccc;
+}
 
-        .header-right { display: flex; align-items: center; gap: 12px; }
-        .logo { width: 45px; height: 45px; object-fit: contain; }
-        .header-title { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
+button { background:#1b8f4c; color:white; font-weight:bold; }
 
-        .sidebar-toggle {
-            background: #f0fdf4; /* خلفية خضراء باهتة جداً للايقونة */
-            border: none; 
-            color: var(--iac-primary);
-            font-size: 1.4rem; 
-            cursor: pointer; 
-            padding: 8px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.card {
+  background:white; padding:20px; border-radius:15px;
+  margin-top:20px; display:none;
+}
 
-        /* --- Sidebar --- */
-        .sidebar {
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
-            background: white; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.1); padding: 20px;
-        }
-        .sidebar.active { left: 0; }
-        .sidebar-header { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; font-weight: 800; color: var(--iac-primary); }
-        .sidebar-item { padding: 12px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-        .sidebar-item:hover { background: #f0fdf4; color: var(--iac-primary); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
+.status-box { padding:10px; margin-top:10px; border-radius:10px; }
+.delivered { background:#e6f7ef; color:green; }
+.not-delivered { background:#fff4e5; color:orange; }
 
-        /* --- Main UI --- */
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; }
+img { max-width:100%; margin-top:15px; border-radius:10px; }
 
-        .search-area {
-            background: white; padding: 20px; border-radius: 20px;
-            box-shadow: var(--card-shadow); margin-bottom: 25px;
-        }
-
-        .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
-
-        input {
-            flex: 1; padding: 14px; border: 2px solid #f1f5f4;
-            border-radius: 12px; outline: none; font-family: inherit; font-size: 1rem;
-            transition: 0.3s; background: #f9fbfb;
-        }
-        input:focus { border-color: var(--iac-primary); background: white; }
-
-        .btn-search {
-            background: var(--iac-primary); color: white; border: none;
-            padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer;
-        }
-
-        .btn-scan {
-            width: 100%; padding: 16px; background: #f0fdf4;
-            color: var(--iac-primary); border: 2px dashed var(--iac-primary);
-            border-radius: 12px; font-weight: 800; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-
-        /* --- Result Card --- */
-        .result-card {
-            background: white; border-radius: 25px; overflow: hidden;
-            box-shadow: var(--card-shadow); display: none;
-            border-top: 6px solid var(--iac-primary);
-            animation: slideUp 0.4s ease-out;
-        }
-
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .card-body { padding: 25px; }
-        .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
-        .data-row:last-child { border: none; }
-        .data-row label { font-size: 0.8rem; color: #8898aa; display: block; margin-bottom: 4px; }
-        .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
-
-        .status-box {
-            padding: 15px; border-radius: 15px; text-align: center;
-            font-weight: 800; margin-top: 10px; font-size: 0.95rem;
-        }
-        .not-delivered { background: #fff4e5; color: #d48806; border: 1px solid #ffe8cc; }
-        .delivered { background: #e6f7ef; color: #1b8f4c; border: 1px solid #c3e6cb; }
-
-        .btn-confirm {
-            width: 100%; padding: 18px; background: var(--iac-primary);
-            color: white; border: none; border-radius: 15px;
-            font-size: 1.1rem; font-weight: 800; margin-top: 20px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
-        }
-
-        /* --- Camera (Unchanged Logic/UI) --- */
-        #cam-container {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: black; z-index: 3000; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        #reader { width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; border: 2px solid var(--iac-primary); }
-        .cam-close {
-            position: absolute; top: 30px; right: 30px; color: white;
-            font-size: 2.5rem; cursor: pointer; z-index: 3001; line-height: 1;
-        }
-    </style>
+#reader { width:100%; }
+#cam-container {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:black; display:none; justify-content:center; align-items:center;
+}
+</style>
 </head>
+
 <body>
 
-<header>
-    <div class="header-right">
-        <img src="https://i.postimg.cc/BvLv7FDL/images.jpg?raw=true" alt="IAC Logo" class="logo">
-        <span class="header-title">مؤسسة الإغاثة | حملة الأضاحي</span>
-    </div>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-    </button>
-</header>
-
-<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-<div id="sidebar" class="sidebar">
-    <div class="sidebar-header">القائمة الرئيسية</div>
-    <div class="sidebar-item">🏠 الصفحة الرئيسية</div>
-    <div class="sidebar-item">📊 إحصائيات التوزيع</div>
-    <div class="sidebar-item">⚙️ الإعدادات</div>
-    <div class="sidebar-item" style="color: #e74c3c;">🚪 تسجيل الخروج</div>
-</div>
-
 <div class="container">
-    <div class="search-area">
-        <div class="input-row">
-            <input type="text" id="idInput" placeholder="أدخل رقم الـ ID للمستفيد...">
-            <button class="btn-search" onclick="fetchData(document.getElementById('idInput').value)">بحث</button>
-        </div>
-        <button class="btn-scan" onclick="startFastScan()">
-            <span>📷</span>
-            <span>مسح باركود سريع</span>
-        </button>
-    </div>
 
-    <div id="resultCard" class="result-card">
-        <div class="card-body">
-            <div class="data-row"><label>اسم المستفيد</label><span id="resName"></span></div>
-            <div class="data-row"><label>اسم القرين</label><span id="resSpouse"></span></div>
-            <div class="data-row"><label>رقم الـ ID</label><span id="resId"></span></div>
-            <div id="statusBox" class="status-box"></div>
-            <button id="deliverBtn" class="btn-confirm" onclick="confirmDelivery()">إتمام عملية التسليم</button>
-        </div>
-    </div>
+<input type="text" id="idInput" placeholder="أدخل ID">
+<button onclick="fetchData(idInput.value)">بحث</button>
+<button onclick="startScan()">📷 مسح باركود</button>
+
+<div id="resultCard" class="card">
+  <div>الاسم: <span id="resName"></span></div>
+  <div>الزوجة: <span id="resSpouse"></span></div>
+  <div>ID: <span id="resId"></span></div>
+
+  <div id="statusBox" class="status-box"></div>
+
+  <button id="deliverBtn" onclick="confirmDelivery()">إتمام التسليم</button>
 </div>
 
+</div>
+
+<!-- كاميرا QR -->
 <div id="cam-container">
-    <div class="cam-close" onclick="stopScan()">×</div>
-    <div id="reader"></div>
-    <p style="color:white; margin-top:20px; font-weight: 500;">جاري المسح التلقائي...</p>
+  <div id="reader"></div>
 </div>
+
+<!-- input الكاميرا -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGO0rRKXtOfp56H02Sb71wnF22U90DDhn1TUBFvlvBGJkVPVTlm-973S8COijAlgHV0w/exec";
-    let currentId = "";
-    let html5QrCode;
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('active');
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_bv9ATBHaCji2MkmCb8406_xNXurBO7g6lE94UgxXgfVCXbC5MhpV1pkV0YB_sdNodQ/exec";
+
+let currentId = "";
+let html5QrCode;
+
+// ================= JSONP =================
+function jsonp(url) {
+  return new Promise((resolve) => {
+    const cb = 'cb' + Date.now();
+    const s = document.createElement('script');
+
+    s.src = `${url}&callback=${cb}`;
+
+    window[cb] = (data) => {
+      delete window[cb];
+      s.remove();
+      resolve(data);
+    };
+
+    document.body.appendChild(s);
+  });
+}
+
+// ================= البحث =================
+async function fetchData(id) {
+  if (!id) return;
+
+  currentId = id.trim();
+  document.getElementById('resultCard').style.display = 'none';
+
+  const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
+
+  if (res.status === "success") {
+    showResult(res.data);
+  } else {
+    alert("غير موجود");
+  }
+}
+
+// ================= عرض البيانات =================
+function showResult(data) {
+
+  const card = document.getElementById('resultCard');
+  card.style.display = 'block';
+
+  document.getElementById('resName').innerText = data.name;
+  document.getElementById('resSpouse').innerText = data.spouse;
+  document.getElementById('resId').innerText = data.id;
+
+  const box = document.getElementById('statusBox');
+  const btn = document.getElementById('deliverBtn');
+
+  // حذف القديم
+  const oldImg = document.getElementById("previewImage");
+  const oldBtn = document.getElementById("viewImageBtn");
+  if (oldImg) oldImg.remove();
+  if (oldBtn) oldBtn.remove();
+
+  if (data.isDelivered) {
+
+    box.className = "status-box delivered";
+    box.innerText = "✅ تم الاستلام مسبقاً";
+
+    btn.style.display = "none";
+
+    if (data.image) {
+      const viewBtn = document.createElement("button");
+      viewBtn.id = "viewImageBtn";
+      viewBtn.innerText = "📷 عرض الصورة";
+
+      viewBtn.onclick = () => showImage(data.image);
+
+      card.appendChild(viewBtn);
     }
 
-    function jsonp(url) {
-        return new Promise((resolve) => {
-            const cb = 'cb' + Date.now();
-            const s = document.createElement('script');
-            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
-            window[cb] = (d) => {
-                delete window[cb];
-                s.remove();
-                resolve(d);
-            };
-            document.body.appendChild(s);
-        });
-    }
+  } else {
 
-    async function startFastScan() {
-        document.getElementById('cam-container').style.display = 'flex';
-        html5QrCode = new Html5Qrcode("reader");
-        try {
-            await html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 20, qrbox: 250 },
-                (text) => {
-                    document.getElementById('idInput').value = text;
-                    stopScan();
-                    fetchData(text);
-                }
-            );
-        } catch (err) {
-            alert("خطأ في الكاميرا: " + err);
-            stopScan();
-        }
-    }
+    box.className = "status-box not-delivered";
+    box.innerText = "⏳ جاهز للتسليم";
 
-    function stopScan() {
-        if (html5QrCode) {
-            html5QrCode.stop().finally(() => {
-                document.getElementById('cam-container').style.display = 'none';
-            });
-        } else {
-            document.getElementById('cam-container').style.display = 'none';
-        }
-    }
+    btn.style.display = "block";
+  }
+}
 
-    async function fetchData(id) {
-        if (!id) return;
-        currentId = id.trim();
-        document.getElementById('resultCard').style.display = 'none';
-        const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
-        if (res.status === "success") {
-            showResult(res.data);
-        } else {
-            alert("المستفيد غير موجود");
-        }
-    }
+// ================= عرض الصورة =================
+function showImage(url) {
 
-    function showResult(data) {
-        document.getElementById('resultCard').style.display = 'block';
-        document.getElementById('resName').innerText = data.name;
-        document.getElementById('resSpouse').innerText = data.spouse;
-        document.getElementById('resId').innerText = data.id;
-        const box = document.getElementById('statusBox');
-        const btn = document.getElementById('deliverBtn');
-        if (data.isDelivered) {
-            box.className = "status-box delivered";
-            box.innerText = "✅ تم الاستلام مسبقاً";
-            btn.style.display = "none";
-        } else {
-            box.className = "status-box not-delivered";
-            box.innerText = "⏳ جاهز للتسليم الآن";
-            btn.style.display = "block";
-        }
-    }
+  let img = document.getElementById("previewImage");
 
-    async function confirmDelivery() {
-        if (!confirm("تأكيد التسليم؟")) return;
-        const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
-        if (res.status === "success") {
-            alert("تم بنجاح");
-            fetchData(currentId);
-        }
+  if (!img) {
+    img = document.createElement("img");
+    img.id = "previewImage";
+    document.getElementById("resultCard").appendChild(img);
+  }
+
+  img.src = url;
+}
+
+// ================= التسليم (يفتح الكاميرا) =================
+function confirmDelivery() {
+  openCamera();
+}
+
+// ================= التقاط صورة =================
+function openCamera() {
+
+  const input = document.getElementById("cameraInput");
+  input.value = "";
+  input.click();
+
+  input.onchange = () => {
+
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+
+      const base64 = reader.result;
+
+      const res = await jsonp(
+        `${SCRIPT_URL}?action=markAsDelivered&id=${currentId}&image=${encodeURIComponent(base64)}`
+      );
+
+      if (res.status === "success") {
+        alert("تم التسليم");
+        fetchData(currentId);
+      } else {
+        alert("خطأ");
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+}
+
+// ================= QR Scanner =================
+function startScan() {
+
+  document.getElementById('cam-container').style.display = 'flex';
+
+  html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (text) => {
+      stopScan();
+      fetchData(text);
     }
+  );
+}
+
+function stopScan() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      document.getElementById('cam-container').style.display = 'none';
+    });
+  }
+}
+
 </script>
+
 </body>
 </html>
