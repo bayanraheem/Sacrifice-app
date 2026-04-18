@@ -50,7 +50,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRj3kmYtj8HvzvB6hokbC4fDB5Z0zQdekOc_Njb8ciut3HeXsYsvRm4YXadxRcAmfRPA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRG2iKSQWSllw6ZEj1okQevWagT6MQV9AmrSzq4O2b4PwwhDQ-UGdVyH-wChfzhc-H2Q/exec";
     let currentId = "";
     let isCamOpen = false;
 
@@ -105,43 +105,50 @@
         }
     }
 
-    async function sendData() {
+async function sendData() {
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('photoCanvas');
     const btn = document.getElementById('deliverBtn');
 
     btn.disabled = true;
-    btn.innerText = "⏳ جاري الرفع... يرجى الانتظار";
+    btn.innerText = "⏳ جاري الحفظ... يرجى عدم الإغلاق";
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL('image/jpeg', 0.3);
+    // تصغير أبعاد الصورة لتقليل حجم البيانات (مهم جداً لجوجل سكريبت)
+    canvas.width = 640; 
+    canvas.height = 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
+    
+    // جودة 0.2 كافية جداً للتوثيق وتضمن استقرار الرفع
+    const imageData = canvas.toDataURL('image/jpeg', 0.2); 
 
-    if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-
-    // إرسال البيانات كـ نص بسيط لتجنب رفض جوجل للـ JSON المعقد
-    const plainTextBody = JSON.stringify({
-        id: currentId,
-        image: imageData
-    });
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
 
     fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: plainTextBody
-    }).then(() => {
+        mode: 'no-cors', // لتجنب مشاكل CORS
+        headers: {
+            'Content-Type': 'text/plain' // نرسلها كنص خام ليتجاوز الحماية
+        },
+        body: JSON.stringify({
+            id: currentId,
+            image: imageData
+        })
+    })
+    .then(() => {
+        // ننتظر 5 ثوانٍ ليعطي فرصة للسكريبت لإنهاء المعالجة في الخلفية
         setTimeout(() => {
-            alert("تم إرسال الطلب بنجاح! انتظر ثواني لتحديث الحالة.");
-            location.reload(); // إعادة تحميل الصفحة للتأكد من تحديث البيانات
-        }, 4000);
-    }).catch(err => {
-        alert("خطأ في الاتصال");
+            alert("تم إرسال الصورة وتحديث البيانات بنجاح!");
+            location.reload(); 
+        }, 5000);
+    })
+    .catch(err => {
+        console.error(err);
+        alert("حدث خطأ في الشبكة، حاول مرة أخرى");
         btn.disabled = false;
     });
 }
-    
     function jsonp(url) {
         return new Promise(resolve => {
             const cb = 'cb' + Date.now();
