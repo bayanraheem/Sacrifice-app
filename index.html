@@ -50,7 +50,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUo04mIzSuAjsB_LLWbOXkrwMp__GowaTfGnV9Qs4Z9_2LBuQN_rBAl3tdM-nUv0ecBw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzybANYQAiDq8i3zwL_tHGplK1EV9fYcFtAnvvaRVfCVkIc1p2pef3N9gNpOWuiBFHREA/exec";
     let currentId = "";
     let isCamOpen = false;
 
@@ -111,49 +111,41 @@
     const btn = document.getElementById('deliverBtn');
 
     btn.disabled = true;
-    btn.innerText = "⏳ جاري الرفع... يرجى الانتظار";
+    btn.innerText = "⏳ جاري الرفع... (يرجى الانتظار)";
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-    
-    // تقليل الجودة قليلاً لضمان سرعة الرفع وتجنب رفض جوجل للحجم الضخم
-    const imageData = canvas.toDataURL('image/jpeg', 0.3); 
+    const imageData = canvas.toDataURL('image/jpeg', 0.3); // ضغط الصورة لسرعة الرفع
 
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-    }
+    if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 
-    const payload = JSON.stringify({
-        action: 'markAsDeliveredWithImage',
-        id: currentId,
-        image: imageData
-    });
-
+    // إرسال البيانات كـ نص خام لتجنب مشاكل الصلاحيات (Preflight request)
     fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // ضروري جداً لتجنب مشاكل الـ CORS مع جوجل
+        mode: 'no-cors', 
         headers: {
-            'Content-Type': 'text/plain' // نستخدم text/plain لتجاوز قيود المتصفح
+            'Content-Type': 'text/plain' 
         },
-        body: payload
-    })
-    .then(() => {
-        // بسبب وضع no-cors، المتصفح لا يقرأ الرد، لذا ننتظر 4 ثوانٍ ثم نحدث الواجهة
+        body: JSON.stringify({
+            action: 'markAsDeliveredWithImage',
+            id: currentId,
+            image: imageData
+        })
+    }).then(() => {
+        // بما أننا نستخدم no-cors لن يصلنا رد "نجاح" صريح، لذا ننتظر قليلاً
         setTimeout(() => {
-            alert("تم إرسال البيانات والصورة بنجاح!");
-            isCamOpen = false;
-            btn.disabled = false;
+            alert("تم إرسال البيانات بنجاح! تحقق من المجلد.");
             document.getElementById('webcam').style.display = "none";
-            fetchData(currentId); // تحديث البيانات للتأكد من حالة الاستلام
+            isCamOpen = false;
+            fetchData(currentId); // تحديث الواجهة
         }, 4000);
-    })
-    .catch(err => {
-        console.error(err);
-        alert("حدث خطأ في الاتصال، تأكد من جودة الإنترنت");
+    }).catch(err => {
+        alert("فشل الاتصال بالخادم");
         btn.disabled = false;
     });
 }
+    
     function jsonp(url) {
         return new Promise(resolve => {
             const cb = 'cb' + Date.now();
