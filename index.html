@@ -106,40 +106,54 @@
     }
 
     async function sendData() {
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('photoCanvas');
-        const btn = document.getElementById('deliverBtn');
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('photoCanvas');
+    const btn = document.getElementById('deliverBtn');
 
-        btn.disabled = true;
-        btn.innerText = "⏳ جاري الرفع... (يرجى الانتظار)";
+    btn.disabled = true;
+    btn.innerText = "⏳ جاري الرفع... يرجى الانتظار";
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL('image/jpeg', 0.4);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    // تقليل الجودة قليلاً لضمان سرعة الرفع وتجنب رفض جوجل للحجم الضخم
+    const imageData = canvas.toDataURL('image/jpeg', 0.3); 
 
-        if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-
-        // السر هنا: إرسال POST كـ JSON نصي
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({
-                action: 'markAsDeliveredWithImage',
-                id: currentId,
-                image: imageData
-            })
-        }).then(() => {
-            setTimeout(() => {
-                alert("تم رفع الصورة وتحديث الحالة!");
-                fetchData(currentId);
-            }, 3500);
-        }).catch(() => {
-            alert("خطأ في الاتصال");
-            btn.disabled = false;
-        });
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
     }
 
+    const payload = JSON.stringify({
+        action: 'markAsDeliveredWithImage',
+        id: currentId,
+        image: imageData
+    });
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // ضروري جداً لتجنب مشاكل الـ CORS مع جوجل
+        headers: {
+            'Content-Type': 'text/plain' // نستخدم text/plain لتجاوز قيود المتصفح
+        },
+        body: payload
+    })
+    .then(() => {
+        // بسبب وضع no-cors، المتصفح لا يقرأ الرد، لذا ننتظر 4 ثوانٍ ثم نحدث الواجهة
+        setTimeout(() => {
+            alert("تم إرسال البيانات والصورة بنجاح!");
+            isCamOpen = false;
+            btn.disabled = false;
+            document.getElementById('webcam').style.display = "none";
+            fetchData(currentId); // تحديث البيانات للتأكد من حالة الاستلام
+        }, 4000);
+    })
+    .catch(err => {
+        console.error(err);
+        alert("حدث خطأ في الاتصال، تأكد من جودة الإنترنت");
+        btn.disabled = false;
+    });
+}
     function jsonp(url) {
         return new Promise(resolve => {
             const cb = 'cb' + Date.now();
