@@ -50,7 +50,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzybANYQAiDq8i3zwL_tHGplK1EV9fYcFtAnvvaRVfCVkIc1p2pef3N9gNpOWuiBFHREA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRj3kmYtj8HvzvB6hokbC4fDB5Z0zQdekOc_Njb8ciut3HeXsYsvRm4YXadxRcAmfRPA/exec";
     let currentId = "";
     let isCamOpen = false;
 
@@ -111,37 +111,33 @@
     const btn = document.getElementById('deliverBtn');
 
     btn.disabled = true;
-    btn.innerText = "⏳ جاري الرفع... (يرجى الانتظار)";
+    btn.innerText = "⏳ جاري الرفع... يرجى الانتظار";
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL('image/jpeg', 0.3); // ضغط الصورة لسرعة الرفع
+    const imageData = canvas.toDataURL('image/jpeg', 0.3);
 
     if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 
-    // إرسال البيانات كـ نص خام لتجنب مشاكل الصلاحيات (Preflight request)
+    // إرسال البيانات كـ نص بسيط لتجنب رفض جوجل للـ JSON المعقد
+    const plainTextBody = JSON.stringify({
+        id: currentId,
+        image: imageData
+    });
+
     fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', 
-        headers: {
-            'Content-Type': 'text/plain' 
-        },
-        body: JSON.stringify({
-            action: 'markAsDeliveredWithImage',
-            id: currentId,
-            image: imageData
-        })
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: plainTextBody
     }).then(() => {
-        // بما أننا نستخدم no-cors لن يصلنا رد "نجاح" صريح، لذا ننتظر قليلاً
         setTimeout(() => {
-            alert("تم إرسال البيانات بنجاح! تحقق من المجلد.");
-            document.getElementById('webcam').style.display = "none";
-            isCamOpen = false;
-            fetchData(currentId); // تحديث الواجهة
+            alert("تم إرسال الطلب بنجاح! انتظر ثواني لتحديث الحالة.");
+            location.reload(); // إعادة تحميل الصفحة للتأكد من تحديث البيانات
         }, 4000);
     }).catch(err => {
-        alert("فشل الاتصال بالخادم");
+        alert("خطأ في الاتصال");
         btn.disabled = false;
     });
 }
