@@ -26,9 +26,10 @@
             display: flex; flex-direction: column; min-height: 100vh;
         }
 
+        /* --- Header (Updated to White) --- */
         header {
             background: var(--white);
-            color: var(--iac-primary);
+            color: var(--iac-primary); /* نص أخضر */
             padding: 10px 15px;
             display: flex;
             align-items: center;
@@ -45,7 +46,7 @@
         .header-title { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
 
         .sidebar-toggle {
-            background: #f0fdf4;
+            background: #f0fdf4; /* خلفية خضراء باهتة جداً للايقونة */
             border: none; 
             color: var(--iac-primary);
             font-size: 1.4rem; 
@@ -57,6 +58,7 @@
             justify-content: center;
         }
 
+        /* --- Sidebar --- */
         .sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
             background: white; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -68,6 +70,7 @@
         .sidebar-item:hover { background: #f0fdf4; color: var(--iac-primary); }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
 
+        /* --- Main UI --- */
         .container { padding: 20px; max-width: 500px; margin: 0 auto; width: 100%; }
 
         .search-area {
@@ -96,6 +99,7 @@
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
+        /* --- Result Card --- */
         .result-card {
             background: white; border-radius: 25px; overflow: hidden;
             box-shadow: var(--card-shadow); display: none;
@@ -107,10 +111,9 @@
 
         .card-body { padding: 25px; }
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
+        .data-row:last-child { border: none; }
         .data-row label { font-size: 0.8rem; color: #8898aa; display: block; margin-bottom: 4px; }
         .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
-
-        .cam-preview { width: 100%; border-radius: 15px; margin-top: 10px; display: none; border: 2px solid var(--iac-primary); background: #000; }
 
         .status-box {
             padding: 15px; border-radius: 15px; text-align: center;
@@ -125,9 +128,8 @@
             font-size: 1.1rem; font-weight: 800; margin-top: 20px; cursor: pointer;
             box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
         }
-        .btn-view { background: #fff; color: var(--iac-primary); border: 2px solid var(--iac-primary); box-shadow: none; }
-        .btn-confirm:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
 
+        /* --- Camera (Unchanged Logic/UI) --- */
         #cam-container {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: black; z-index: 3000; display: none;
@@ -178,14 +180,8 @@
             <div class="data-row"><label>اسم المستفيد</label><span id="resName"></span></div>
             <div class="data-row"><label>اسم القرين</label><span id="resSpouse"></span></div>
             <div class="data-row"><label>رقم الـ ID</label><span id="resId"></span></div>
-            
-            <video id="webcam" autoplay playsinline class="cam-preview"></video>
-            <canvas id="photoCanvas" style="display:none;"></canvas>
-
             <div id="statusBox" class="status-box"></div>
-            
-            <button id="deliverBtn" class="btn-confirm" onclick="handleDeliveryFlow()">📷 التقاط صورة الهوية والتسليم</button>
-            <button id="viewPhotoBtn" class="btn-confirm btn-view" style="display:none;">🖼️ عرض صورة الإثبات</button>
+            <button id="deliverBtn" class="btn-confirm" onclick="confirmDelivery()">إتمام عملية التسليم</button>
         </div>
     </div>
 </div>
@@ -197,10 +193,9 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZtB-fGtby55ZCu7-1DtTKjmqWwkZaFlNMnaQaZBjGjE4Y6C8B5ctwewNAmCcAWacvUw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGO0rRKXtOfp56H02Sb71wnF22U90DDhn1TUBFvlvBGJkVPVTlm-973S8COijAlgHV0w/exec";
     let currentId = "";
     let html5QrCode;
-    let isCamOpen = false;
 
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('active');
@@ -254,9 +249,7 @@
     async function fetchData(id) {
         if (!id) return;
         currentId = id.trim();
-        const card = document.getElementById('resultCard');
-        card.style.display = 'none';
-        
+        document.getElementById('resultCard').style.display = 'none';
         const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
         if (res.status === "success") {
             showResult(res.data);
@@ -270,98 +263,27 @@
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resSpouse').innerText = data.spouse;
         document.getElementById('resId').innerText = data.id;
-        
         const box = document.getElementById('statusBox');
-        const dBtn = document.getElementById('deliverBtn');
-        const vBtn = document.getElementById('viewPhotoBtn');
-        const video = document.getElementById('webcam');
-
-        video.style.display = "none";
-        isCamOpen = false;
-        dBtn.disabled = false;
-
+        const btn = document.getElementById('deliverBtn');
         if (data.isDelivered) {
             box.className = "status-box delivered";
             box.innerText = "✅ تم الاستلام مسبقاً";
-            dBtn.style.display = "none";
-            if(data.imageUrl) {
-                vBtn.style.display = "block";
-                vBtn.onclick = () => window.open(data.imageUrl, '_blank');
-            } else {
-                vBtn.style.display = "none";
-            }
+            btn.style.display = "none";
         } else {
             box.className = "status-box not-delivered";
             box.innerText = "⏳ جاهز للتسليم الآن";
-            dBtn.style.display = "block";
-            dBtn.innerText = "📷 التقاط صورة الهوية والتسليم";
-            vBtn.style.display = "none";
+            btn.style.display = "block";
         }
     }
 
-async function handleDeliveryFlow() {
-    const video = document.getElementById('webcam');
-    const dBtn = document.getElementById('deliverBtn');
-    const canvas = document.getElementById('photoCanvas');
-
-    if (!isCamOpen) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
-            });
-            video.srcObject = stream;
-            video.style.display = "block";
-            dBtn.innerText = "✅ اعتماد الصورة وإتمام التسليم";
-            isCamOpen = true;
-        } catch (err) {
-            alert("يرجى السماح بالوصول للكاميرا");
+    async function confirmDelivery() {
+        if (!confirm("تأكيد التسليم؟")) return;
+        const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}`);
+        if (res.status === "success") {
+            alert("تم بنجاح");
+            fetchData(currentId);
         }
-    } else {
-        dBtn.disabled = true;
-        dBtn.innerText = "⏳ جاري الرفع... (يرجى الانتظار)";
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0);
-        
-        // استخدام جودة متوسطة لضمان وصول الملف كاملاً
-        const imageData = canvas.toDataURL('image/jpeg', 0.5);
-
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-        }
-        video.style.display = "none";
-
-        // إرسال البيانات كـ JSON نصي بسيط
-        const payload = JSON.stringify({
-            action: "markAsDeliveredWithImage",
-            id: currentId,
-            image: imageData
-        });
-
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", 
-            headers: {
-                "Content-Type": "text/plain" // نستخدم text/plain لتجنب مشاكل الـ Preflight في CORS
-            },
-            body: payload
-        })
-        .then(() => {
-            setTimeout(() => {
-                alert("تم إرسال الطلب بنجاح. سيتم تحديث الحالة الآن.");
-                isCamOpen = false;
-                dBtn.disabled = false;
-                fetchData(currentId); // تحديث البيانات
-            }, 3500);
-        })
-        .catch(err => {
-            alert("خطأ في الشبكة: " + err);
-            dBtn.disabled = false;
-        });
     }
-}
 </script>
 </body>
 </html>
