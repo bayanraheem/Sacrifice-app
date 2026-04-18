@@ -3,231 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IAC | نظام توثيق الأضاحي</title>
+    <title>IAC | نظام التوزيع</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --iac-primary: #1b8f4c; --iac-dark: #0a4d29; --bg-color: #f0f4f3; --white: #ffffff; }
+        :root { --iac-primary: #1b8f4c; --iac-dark: #0a4d29; --bg-color: #f0f4f3; --white: #ffffff; --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Tajawal', sans-serif; margin: 0; background: var(--bg-color); color: #2c3e50; }
-        
-        header { background: var(--white); color: var(--iac-primary); padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .logo { width: 45px; height: 45px; border-radius: 50%; }
-        
+        header { background: var(--white); color: var(--iac-primary); padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow); border-bottom: 1px solid #eef2f1; }
+        .logo { width: 45px; height: 45px; object-fit: contain; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .search-area { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        .search-area { background: white; padding: 20px; border-radius: 20px; box-shadow: var(--card-shadow); margin-bottom: 25px; }
         .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
-        input { flex: 1; padding: 14px; border: 2px solid #f1f5f4; border-radius: 12px; font-family: inherit; }
-        
-        .btn-search { background: var(--iac-primary); color: white; border: none; padding: 0 20px; border-radius: 12px; cursor: pointer; }
+        input { flex: 1; padding: 14px; border: 2px solid #f1f5f4; border-radius: 12px; outline: none; font-size: 1rem; background: #f9fbfb; }
+        .btn-search { background: var(--iac-primary); color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
         .btn-scan { width: 100%; padding: 16px; background: #f0fdf4; color: var(--iac-primary); border: 2px dashed var(--iac-primary); border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-
-        .result-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.08); display: none; border-top: 6px solid var(--iac-primary); animation: slideUp 0.4s ease-out; }
+        .result-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: var(--card-shadow); display: none; border-top: 6px solid var(--iac-primary); animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .card-body { padding: 25px; }
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #f0f4f3; padding-bottom: 10px; }
         .data-row label { font-size: 0.8rem; color: #8898aa; display: block; }
         .data-row span { font-size: 1.15rem; font-weight: 700; color: #32325d; }
-
+        #webcam { width: 100%; border-radius: 15px; margin-top: 10px; display: none; border: 2px solid var(--iac-primary); }
         .status-box { padding: 15px; border-radius: 15px; text-align: center; font-weight: 800; margin-top: 10px; }
         .not-delivered { background: #fff4e5; color: #d48806; }
         .delivered { background: #e6f7ef; color: #1b8f4c; }
-
         .btn-confirm { width: 100%; padding: 18px; background: var(--iac-primary); color: white; border: none; border-radius: 15px; font-weight: 800; margin-top: 20px; cursor: pointer; }
-        .btn-view { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 15px; margin-top: 10px; font-weight: 700; cursor: pointer; display: none; }
-
-        /* كاميرا الهوية */
-        #capture-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #video { width: 90%; border: 3px solid var(--iac-primary); border-radius: 15px; }
-        
-        /* كاميرا الباركود */
+        .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
         #cam-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #reader { width: 90%; max-width: 400px; }
-
-        /* Loading */
-        #loading { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
+        #reader { width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; }
+        .cam-close { position: absolute; top: 30px; right: 30px; color: white; font-size: 2.5rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="loading">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--iac-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p>جاري المعالجة...</p>
-</div>
-
 <header>
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display:flex; align-items:center; gap:12px;">
         <img src="https://i.postimg.cc/BvLv7FDL/images.jpg" class="logo">
-        <span style="font-weight:800; font-size:0.9rem;">إغاثة IAC<br>توثيق الهوية</span>
+        <span style="font-weight:800; font-size:0.9rem;">مؤسسة الإغاثة | الأضاحي</span>
     </div>
 </header>
 
 <div class="container">
     <div class="search-area">
         <div class="input-row">
-            <input type="text" id="idInput" placeholder="رقم الـ ID...">
+            <input type="text" id="idInput" placeholder="رقم المستفيد...">
             <button class="btn-search" onclick="fetchData(document.getElementById('idInput').value)">بحث</button>
         </div>
-        <button class="btn-scan" onclick="startBarcodeScan()">📷 مسح باركود</button>
+        <button class="btn-scan" onclick="startFastScan()">📷 مسح باركود</button>
     </div>
 
     <div id="resultCard" class="result-card">
         <div class="card-body">
             <div class="data-row"><label>الاسم</label><span id="resName"></span></div>
-            <div class="data-row"><label>ID</label><span id="resId"></span></div>
+            <div class="data-row"><label>القرين</label><span id="resSpouse"></span></div>
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="photoCanvas" style="display:none;"></canvas>
             <div id="statusBox" class="status-box"></div>
-            
-            <button id="deliverBtn" class="btn-confirm" onclick="startIdentityCapture()">📸 تصوير الهوية وإتمام التسليم</button>
-            <button id="viewPhotoBtn" class="btn-view" onclick="viewPhoto()">👁️ عرض صورة الهوية المسجلة</button>
+            <button id="deliverBtn" class="btn-confirm" onclick="handleDeliveryFlow()">التقاط صورة الهوية والتسليم</button>
         </div>
     </div>
 </div>
 
 <div id="cam-container">
-    <div style="position:absolute; top:20px; right:20px; color:white; font-size:30px;" onclick="stopBarcodeScan()">×</div>
+    <div class="cam-close" onclick="stopScan()">×</div>
     <div id="reader"></div>
 </div>
 
-<div id="capture-container">
-    <h3 style="color:white; margin-bottom:15px;">صوّر هوية المستفيد</h3>
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <div style="margin-top:20px; display:flex; gap:10px;">
-        <button onclick="takePicture()" style="padding:15px 30px; background:white; border-radius:10px; border:none; font-weight:800;">التقاط الصورة</button>
-        <button onclick="stopIdentityCapture()" style="padding:15px 30px; background:#e74c3c; color:white; border-radius:10px; border:none;">إلغاء</button>
-    </div>
-</div>
-
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIg7-KLy_lLV7gDa3coLyk7K4gM4mQxof6hbgzIYhwuLj8lM4b2UUBjuMM8M4x7X75Mg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxje2J0Vegn-2BRNGJDjeW68-7r9AJQcYFMCxVW746akkBlILXTsSarFng_-FDopbEEYw/exec";
     let currentId = "";
     let html5QrCode;
-    let currentImageUrl = "";
-
-    // 1. نظام البحث (بإستخدام JSONP لتجنب CORS في الـ GET)
-    function jsonp(url) {
-        return new Promise((resolve) => {
-            const cb = 'cb' + Date.now();
-            const s = document.createElement('script');
-            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
-            window[cb] = (d) => { delete window[cb]; s.remove(); resolve(d); };
-            document.body.appendChild(s);
-        });
-    }
+    let isCamOpen = false;
 
     async function fetchData(id) {
         if (!id) return;
-        document.getElementById('loading').style.display = 'flex';
         currentId = id.trim();
         const res = await jsonp(`${SCRIPT_URL}?action=getBeneficiary&id=${currentId}`);
-        document.getElementById('loading').style.display = 'none';
-        
         if (res.status === "success") {
             showResult(res.data);
         } else {
-            alert("المستفيد غير موجود");
+            alert("غير موجود");
         }
     }
 
     function showResult(data) {
         document.getElementById('resultCard').style.display = 'block';
         document.getElementById('resName').innerText = data.name;
-        document.getElementById('resId').innerText = data.id;
-        currentImageUrl = data.imageUrl;
-
+        document.getElementById('resSpouse').innerText = data.spouse;
         const box = document.getElementById('statusBox');
-        const dBtn = document.getElementById('deliverBtn');
-        const vBtn = document.getElementById('viewPhotoBtn');
+        const btn = document.getElementById('deliverBtn');
+        const video = document.getElementById('webcam');
+
+        video.style.display = "none";
+        isCamOpen = false;
 
         if (data.isDelivered) {
             box.className = "status-box delivered";
-            box.innerText = "✅ تم الاستلام مسبقاً";
-            dBtn.style.display = "none";
-            vBtn.style.display = currentImageUrl ? "block" : "none";
+            box.innerText = "✅ تم الاستلام";
+            btn.style.display = "none";
         } else {
             box.className = "status-box not-delivered";
             box.innerText = "⏳ جاهز للتسليم";
-            dBtn.style.display = "block";
-            vBtn.style.display = "none";
+            btn.style.display = "block";
+            btn.innerText = "التقاط صورة الهوية والتسليم";
         }
     }
 
-    // 2. نظام الباركود
-    async function startBarcodeScan() {
-        document.getElementById('cam-container').style.display = 'flex';
-        html5QrCode = new Html5Qrcode("reader");
-        await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-            stopBarcodeScan();
-            document.getElementById('idInput').value = text;
-            fetchData(text);
-        });
+    async function handleDeliveryFlow() {
+        const video = document.getElementById('webcam');
+        const btn = document.getElementById('deliverBtn');
+
+        if (!isCamOpen) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.style.display = "block";
+                btn.innerText = "اعتماد الصورة وإتمام التسليم";
+                isCamOpen = true;
+            } catch (err) { alert("افتح الكاميرا!"); }
+        } else {
+            uploadProcess();
+        }
     }
 
-    function stopBarcodeScan() {
-        if(html5QrCode) html5QrCode.stop();
-        document.getElementById('cam-container').style.display = 'none';
-    }
+    async function uploadProcess() {
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('photoCanvas');
+        const btn = document.getElementById('deliverBtn');
 
-    // 3. نظام تصوير الهوية (استخدام POST لتجنب مشاكل الحجم و CORS)
-    async function startIdentityCapture() {
-        document.getElementById('capture-container').style.display = 'flex';
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        document.getElementById('video').srcObject = stream;
-    }
+        btn.disabled = true;
+        btn.innerText = "⏳ جاري الرفع...";
 
-    function stopIdentityCapture() {
-        const stream = document.getElementById('video').srcObject;
-        if(stream) stream.getTracks().forEach(t => t.stop());
-        document.getElementById('capture-container').style.display = 'none';
-    }
-
-    async function takePicture() {
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
-        
-        const base64Image = canvas.toDataURL('image/jpeg', 0.6); // ضغط الصورة لسرعة الرفع
-        stopIdentityCapture();
-        uploadDelivery(base64Image);
-    }
+        const imageData = canvas.toDataURL('image/jpeg', 0.5);
 
-    async function uploadDelivery(imgData) {
-        document.getElementById('loading').style.display = 'flex';
-        
+        // إغلاق الكاميرا
+        video.srcObject.getTracks().forEach(track => track.stop());
+
+        // إرسال البيانات (POST)
         try {
-            // استخدام fetch مع mode: 'no-cors' قد لا يعيد النتيجة، لذا نستخدم POST عادي
-            // الأبس سكريبت يدعم الاستقبال من نطاقات مختلفة إذا تم ضبطه كـ Web App للجميع
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // لتجنب مشاكل التوثيق المعقدة في المتصفح
-                cache: 'no-cache',
+                mode: 'no-cors',
                 body: JSON.stringify({
                     action: 'markAsDeliveredWithImage',
                     id: currentId,
-                    image: imgData
+                    image: imageData
                 })
             });
-
-            // لأن no-cors لا تعيد نتيجة، سننتظر قليلاً ثم نحدث البيانات للتأكد
+            
+            // بسبب no-cors لا ننتظر رداً حقيقياً، سننتظر 3 ثوانٍ ثم نحدث
             setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                alert("تمت العملية! جاري تحديث البيانات...");
+                alert("تم التسليم بنجاح");
                 fetchData(currentId);
             }, 3000);
 
         } catch (e) {
-            alert("حدث خطأ في الاتصال");
-            document.getElementById('loading').style.display = 'none';
+            alert("خطأ في الرفع");
+            btn.disabled = false;
         }
     }
 
-    function viewPhoto() {
-        window.open(currentImageUrl, '_blank');
+    function jsonp(url) {
+        return new Promise(resolve => {
+            const cb = 'cb' + Date.now();
+            const s = document.createElement('script');
+            s.src = `${url}${url.includes('?') ? '&' : '?'}callback=${cb}`;
+            window[cb] = d => { delete window[cb]; s.remove(); resolve(d); };
+            document.body.appendChild(s);
+        });
+    }
+
+    function startFastScan() {
+        document.getElementById('cam-container').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+            document.getElementById('idInput').value = text;
+            stopScan();
+            fetchData(text);
+        });
+    }
+
+    function stopScan() {
+        if (html5QrCode) html5QrCode.stop();
+        document.getElementById('cam-container').style.display = 'none';
     }
 </script>
-
-<style>
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-</style>
 </body>
 </html>
