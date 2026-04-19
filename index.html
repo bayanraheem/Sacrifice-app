@@ -101,6 +101,7 @@
             background: var(--iac-primary); color: white;
             box-shadow: 0 4px 15px rgba(27, 143, 76, 0.3);
         }
+        .btn-confirm:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
 
         .btn-view-photo {
             background: #3498db; color: white;
@@ -176,6 +177,7 @@
     let savedPhotoUrl = "";
     let html5QrCode;
 
+    // دالة JSONP للتعامل مع Google Apps Script
     function jsonp(url) {
         return new Promise((resolve) => {
             const cb = 'cb' + Date.now();
@@ -187,6 +189,38 @@
                 resolve(d);
             };
             document.body.appendChild(s);
+        });
+    }
+
+    // دالة ضغط الصور لتحسين سرعة الرفع ومنع الأخطاء
+    function compressImage(file, maxWidth) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.src = ev.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/jpeg', 0.7); // ضغط بجودة 70%
+                };
+            };
+            reader.onerror = reject;
         });
     }
 
@@ -226,7 +260,7 @@
         document.getElementById('resSpouse').innerText = data.spouse;
         document.getElementById('resId').innerText = data.id;
         
-        savedPhotoUrl = data.photoUrl; // تخزين رابط الصورة المسجلة
+        savedPhotoUrl = data.photoUrl;
         
         const box = document.getElementById('statusBox');
         const dBtn = document.getElementById('deliverBtn');
@@ -234,6 +268,8 @@
         const preview = document.getElementById('photoPreview');
 
         preview.style.display = 'none';
+        dBtn.disabled = false;
+        dBtn.innerText = "📷 التقاط صورة وتسليم";
 
         if (data.isDelivered) {
             box.className = "status-box delivered";
@@ -252,7 +288,6 @@
         const preview = document.getElementById('photoPreview');
         preview.src = savedPhotoUrl;
         preview.style.display = 'block';
-        // تمرير الصفحة للصورة
         preview.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -260,6 +295,7 @@
         document.getElementById('cameraInput').click();
     }
 
+    // المعالج الرئيسي لعملية التقاط الصورة والرفع
     document.getElementById('cameraInput').onchange = async function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -267,31 +303,51 @@
         const btn = document.getElementById('deliverBtn');
         const preview = document.getElementById('photoPreview');
 
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-        btn.disabled = true;
-        btn.innerText = "⏳ جاري الرفع والاعتماد...";
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-
         try {
+            btn.disabled = true;
+            btn.innerText = "⏳ جاري معالجة الصورة...";
+
+            // 1. ضغط الصورة (الحد الأقصى للعرض 1000px)
+            const compressedBlob = await compressImage(file, 1000);
+            
+            // عرض المعاينة للصورة المضغوطة
+            preview.src = URL.createObjectURL(compressedBlob);
+            preview.style.display = 'block';
+            
+            btn.innerText = "⏳ جاري الرفع للسحابة...";
+
+            // 2. رفع الصورة إلى Cloudinary
+            const formData = new FormData();
+            formData.append('file', compressedBlob);
+            formData.append('upload_preset', UPLOAD_PRESET);
+
             const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                method: 'POST', body: formData
+                method: 'POST',
+                body: formData
             });
+
+            if (!cloudRes.ok) throw new Error("فشل الرفع إلى Cloudinary");
+
             const cloudData = await cloudRes.json();
             const imageUrl = cloudData.secure_url;
 
+            btn.innerText = "⏳ جاري حفظ البيانات...";
+
+            // 3. تحديث Google Sheets
             const res = await jsonp(`${SCRIPT_URL}?action=markAsDelivered&id=${currentId}&img=${encodeURIComponent(imageUrl)}`);
             
             if (res.status === "success") {
-                alert("✅ اكتملت العملية بنجاح");
+                alert("✅ تم التسليم بنجاح");
                 fetchData(currentId);
+            } else {
+                throw new Error("فشل تحديث حالة الاستلام");
             }
+
         } catch (err) {
-            alert("❌ خطأ: " + err);
+            console.error(err);
+            alert("❌ حدث خطأ: " + err.message);
             btn.disabled = false;
+            btn.innerText = "📷 التقاط صورة وتسليم";
         }
     };
 </script>
